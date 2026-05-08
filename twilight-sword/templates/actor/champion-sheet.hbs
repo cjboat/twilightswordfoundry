@@ -148,6 +148,33 @@
           Roll Initiative
         </button>
       </section>
+
+      <h2>Feats</h2>
+
+      <ol class="items-list">
+        {{#each feats as |item|}}
+          <li
+            class="item zelda-item feat-row {{#if item.flags.twilight-sword.kinFeat}}kin-feat{{/if}}"
+            data-item-id="{{item.id}}"
+            title="{{tsItemTooltip item}}"
+          >
+            <img src="{{item.img}}" width="32" height="32" />
+
+            <strong>{{item.name}}</strong>
+
+            <span>{{item.system.way}}</span>
+
+            <button type="button" class="feat-chat" data-item-id="{{item.id}}">
+              Chat
+            </button>
+
+            <div class="item-controls">
+              <button type="button" class="item-edit" data-item-id="{{item.id}}">☰</button>
+              <button type="button" class="item-delete" data-item-id="{{item.id}}">✕</button>
+            </div>
+          </li>
+        {{/each}}
+      </ol>
     </div>
 
     <!-- COMBAT TAB -->
@@ -157,7 +184,7 @@
 
       <ol class="items-list">
         {{#each weapons as |item|}}
-          <li class="item zelda-item {{#unless (tsWeaponAvailable item)}}weapon-expended{{/unless}}" data-item-id="{{item.id}}">
+          <li class="item zelda-item {{#unless (tsWeaponAvailable item)}}weapon-expended{{/unless}}" data-item-id="{{item.id}}" title="{{tsItemTooltip item}}">
 
             <img src="{{item.img}}" width="32" height="32" />
 
@@ -239,7 +266,7 @@
 
       <ol class="items-list">
         {{#each armorItems as |item|}}
-          <li class="item zelda-item" data-item-id="{{item.id}}">
+          <li class="item zelda-item" data-item-id="{{item.id}}" title="{{tsItemTooltip item}}">
 
             <img src="{{item.img}}" width="32" height="32" />
 
@@ -338,6 +365,7 @@
           <li
             class="item zelda-item spell-row {{#if item.system.expended}}spell-expended{{/if}}"
             data-item-id="{{item.id}}"
+            title="{{tsItemTooltip item}}"
             {{#if item.magicSpellSourceId}}data-magic-spell-source-id="{{item.magicSpellSourceId}}" data-magic-spell-name="{{item.magicSpellName}}"{{/if}}
           >
 
@@ -444,34 +472,11 @@
         </div>
       </section>
 
-      <h2>Feats</h2>
-
-      <ol class="items-list">
-        {{#each feats as |item|}}
-          <li class="item zelda-item feat-row {{#if item.flags.twilight-sword.kinFeat}}kin-feat{{/if}}" data-item-id="{{item.id}}">
-            <img src="{{item.img}}" width="32" height="32" />
-
-            <strong>{{item.name}}</strong>
-
-            <span>{{item.system.way}}</span>
-
-            <button type="button" class="feat-chat" data-item-id="{{item.id}}">
-              Chat
-            </button>
-
-            <div class="item-controls">
-              <button type="button" class="item-edit" data-item-id="{{item.id}}">☰</button>
-              <button type="button" class="item-delete" data-item-id="{{item.id}}">✕</button>
-            </div>
-          </li>
-        {{/each}}
-      </ol>
-
       <h2>Gear</h2>
 
       <ol class="items-list">
         {{#each gear as |item|}}
-          <li class="item zelda-item" data-item-id="{{item.id}}">
+          <li class="item zelda-item" data-item-id="{{item.id}}" title="{{tsItemTooltip item}}">
 
             <img src="{{item.img}}" width="32" height="32" />
 

@@ -20,10 +20,12 @@
     {{/if}}
 
     {{#unless isSpell}}
+      {{#unless isKin}}
       <label>
         Quantity
         <input name="system.quantity" type="number" min="0" value="{{system.quantity}}" />
       </label>
+      {{/unless}}
     {{/unless}}
 
     {{#if isPurchasable}}
@@ -245,19 +247,10 @@
   </label>
 
   <label>
-    Way / Category
-    <input name="system.way" type="text" value="{{system.way}}" />
-  </label>
-
-  <label>
     Kin Feature Description
     <textarea name="system.featDescription">{{system.featDescription}}</textarea>
   </label>
 
-  <label>
-    Effect
-    <textarea name="system.effect">{{system.effect}}</textarea>
-  </label>
 {{/if}}
 
     {{#if isGear}}

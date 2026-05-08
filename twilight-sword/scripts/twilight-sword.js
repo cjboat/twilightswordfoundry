@@ -107,6 +107,13 @@ function escapeHtml(value = "") {
     .replace(/'/g, "&#39;");
 }
 
+function stripHtml(value = "") {
+  return String(value)
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 async function rollStatusDuration(durationFormula = "") {
   const formula = String(durationFormula || "").trim();
 
@@ -1789,6 +1796,44 @@ function getSpellTypeLabel(value) {
   return labels[normalizeSpellTypeValue(value)];
 }
 
+function getItemTooltip(item) {
+  const parts = [
+    item?.system?.description,
+    item?.system?.effect,
+    item?.system?.featDescription
+  ]
+    .map(stripHtml)
+    .filter(Boolean);
+
+  if (item?.magicSpellSourceName) {
+    parts.unshift(`Granted by ${item.magicSpellSourceName}.`);
+  }
+
+  return parts.join(" ");
+}
+
+function isKinFeat(item) {
+  return item?.type === "feat" && (
+    item.flags?.["twilight-sword"]?.kinFeat ||
+    item.flags?.["twilight-sword"]?.sourceKin ||
+    item.system?.way === "Kin"
+  );
+}
+
+function isDuplicateKinFeat(actor, item) {
+  if (!isKinFeat(item)) return false;
+
+  const sourceKin = item.flags?.["twilight-sword"]?.sourceKin || actor.system?.kin || "";
+  const kinFeats = actor.items.filter(existing => isKinFeat(existing));
+  const matchingKinFeats = sourceKin
+    ? kinFeats.filter(existing =>
+        (existing.flags?.["twilight-sword"]?.sourceKin || actor.system?.kin || "") === sourceKin
+      )
+    : kinFeats;
+
+  return matchingKinFeats.length > 1;
+}
+
 function getArmorTypeLabel(type) {
   const normalized = normalizeArmorTypeValue(type);
 
@@ -2630,6 +2675,84 @@ function getRangeInfo(actor, targetToken = null) {
   };
 }
 
+const RANGE_HOVER_LABEL_NAME = "twilight-sword-range-hover";
+
+function getRangeHoverSourceToken(targetToken) {
+  const controlled = canvas.tokens?.controlled?.find(token =>
+    token?.actor &&
+    token.id !== targetToken?.id
+  );
+
+  if (controlled) return controlled;
+
+  const combatantToken = game.combat?.combatant?.token?.object;
+
+  if (combatantToken?.actor && combatantToken.id !== targetToken?.id) {
+    return combatantToken;
+  }
+
+  return null;
+}
+
+function clearTokenRangeHoverLabel(token) {
+  const label = token?.getChildByName?.(RANGE_HOVER_LABEL_NAME);
+  if (label) label.destroy({ children: true });
+}
+
+function getRangeHoverLabel(sourceToken, targetToken) {
+  const squares = getSquareDistanceBetweenTokens(sourceToken, targetToken);
+  const band = getRangeBandFromSquares(squares);
+
+  if (!band) return "";
+
+  return `${band.toUpperCase()} (${Math.round(squares)} squares)`;
+}
+
+function createRangeHoverText(text) {
+  const style = {
+    fontFamily: "Georgia",
+    fontSize: 20,
+    fontWeight: "bold",
+    fill: "#fff3cf",
+    stroke: "#064f55",
+    strokeThickness: 5,
+    dropShadow: true,
+    dropShadowColor: "#000000",
+    dropShadowBlur: 3,
+    dropShadowDistance: 2
+  };
+
+  try {
+    return new PIXI.Text({ text, style });
+  } catch (_error) {
+    return new PIXI.Text(text, style);
+  }
+}
+
+function showTokenRangeHoverLabel(targetToken) {
+  clearTokenRangeHoverLabel(targetToken);
+
+  const sourceToken = getRangeHoverSourceToken(targetToken);
+  if (!sourceToken) return;
+
+  const text = getRangeHoverLabel(sourceToken, targetToken);
+  if (!text) return;
+
+  const label = createRangeHoverText(text);
+  label.name = RANGE_HOVER_LABEL_NAME;
+  label.anchor?.set?.(0.5, 1);
+  label.position.set(targetToken.w / 2, -8);
+  label.zIndex = 9999;
+
+  targetToken.addChild(label);
+}
+
+function clearAllRangeHoverLabels() {
+  for (const token of canvas.tokens?.placeables || []) {
+    clearTokenRangeHoverLabel(token);
+  }
+}
+
 function isTargetWithinRange(requiredRange, rangeInfo) {
   const limit = getRangeLimit(requiredRange);
 
@@ -2843,7 +2966,7 @@ async function deleteOwnedItemFromSheet(actor, item) {
     return;
   }
 
-  if (item.flags?.["twilight-sword"]?.kinFeat) {
+  if (isKinFeat(item) && !isDuplicateKinFeat(actor, item)) {
     ui.notifications.warn(`${item.name} is a Kin feat and cannot be removed directly.`);
     return;
   }
@@ -3876,21 +3999,23 @@ async _onDrop(event) {
 
   const featName = item.system.featName || `${item.name} Kin Feature`;
 
-  // Remove any existing Kin feat first.
-    const oldKinFeats = this.actor.items.filter(i =>
-      i.type === "feat" &&
-      (
-        i.flags?.["twilight-sword"]?.kinFeat ||
-        i.system?.way === "Kin"
-      )
-    );
+  // Keep exactly one Kin feat on the sheet, even if the same Kin is dropped again.
+  const oldKinFeats = this.actor.items.filter(i =>
+    i.type === "feat" &&
+    (
+      i.flags?.["twilight-sword"]?.kinFeat ||
+      i.flags?.["twilight-sword"]?.sourceKin ||
+      i.system?.way === "Kin" ||
+      i.name === featName
+    )
+  );
 
-    if (oldKinFeats.length) {
-      await this.actor.deleteEmbeddedDocuments(
-        "Item",
-        oldKinFeats.map(i => i.id)
-      );
-    }
+  if (oldKinFeats.length) {
+    await this.actor.deleteEmbeddedDocuments(
+      "Item",
+      oldKinFeats.map(i => i.id)
+    );
+  }
 
   // Add the new Kin feat.
   await this.actor.createEmbeddedDocuments("Item", [{
@@ -4264,6 +4389,7 @@ Hooks.once("init", function () {
   Handlebars.registerHelper("tsDamageTypeLabel", damageType => getDamageTypeLabel(damageType));
   Handlebars.registerHelper("tsStatusLabel", statusId => getStatusLabel(statusId));
   Handlebars.registerHelper("tsSpellTypeLabel", spellType => getSpellTypeLabel(spellType));
+  Handlebars.registerHelper("tsItemTooltip", item => getItemTooltip(item));
   Handlebars.registerHelper("tsMonsterActionColorLabel", color => getMonsterActionColorLabel(color));
   Handlebars.registerHelper("tsHasMonsterActionColor", color => normalizeMonsterActionColor(color) !== "normal");
 
@@ -4436,6 +4562,22 @@ Hooks.on("updateActor", async (actor, changes) => {
 
     await checkZeroHearts(actor);
   }
+});
+
+Hooks.on("hoverToken", (token, hovered) => {
+  if (hovered) {
+    showTokenRangeHoverLabel(token);
+  } else {
+    clearTokenRangeHoverLabel(token);
+  }
+});
+
+Hooks.on("controlToken", () => {
+  clearAllRangeHoverLabels();
+});
+
+Hooks.on("canvasReady", () => {
+  clearAllRangeHoverLabels();
 });
 
 Hooks.on("updateCombat", async (combat, changed) => {

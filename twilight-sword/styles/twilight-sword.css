@@ -630,6 +630,5 @@ input[name="system.kin"][readonly] {
 }
 
 .kin-feat .item-delete {
-  opacity: 0.35;
-  pointer-events: none;
+  opacity: 0.65;
 }
