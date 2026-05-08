@@ -1,10 +1,8 @@
-/* ========================================================================== */
-/* Twilight Sword System - Complete Build                                     */
-/* ========================================================================== */
+// Twilight Sword Foundry v13 system
 
-/* -------------------------------------------------------------------------- */
-/* Utility Helpers                                                            */
-/* -------------------------------------------------------------------------- */
+
+// Utility Helpers 
+
 
 function buildPips(value, max, type) {
   const pips = [];
@@ -33,9 +31,9 @@ async function confirmDialog(title, content) {
   });
 }
 
-/* -------------------------------------------------------------------------- */
-/* Status Helpers                                                             */
-/* -------------------------------------------------------------------------- */
+
+// Status Helpers 
+
 
 function getStatusIds(actor) {
   const ids = new Set();
@@ -237,9 +235,9 @@ async function toggleActorStatus(actor, statusId) {
 
 
 
-/* -------------------------------------------------------------------------- */
-/* Combat / Healing Helpers                                                   */
-/* -------------------------------------------------------------------------- */
+
+// Combat / Healing Helpers
+
 
 async function recalcArmor(actor) {
   const equippedArmor = actor.items
@@ -289,7 +287,6 @@ async function healActor(actor, amount) {
     "system.hearts.value": newValue
   });
 
-  // Healing above 0 wakes the character up, but Wound remains.
   if (newValue > 0) {
     await removeStatus(actor, "ko");
   }
@@ -460,16 +457,14 @@ async function cleanupRestStatuses(actor) {
     "silence"
   ]);
 
-  // Do NOT remove wound here.
-  // Do NOT remove ko here unless hearts are above 0.
   if (Number(actor.system.hearts?.value ?? 0) > 0) {
     await removeStatus(actor, "ko");
   }
 }
 
-/* -------------------------------------------------------------------------- */
-/* Active Spell Tracking                                                      */
-/* -------------------------------------------------------------------------- */
+
+// Active Spell Tracking
+
 
 function getActiveSpells(actor) {
   const storedSpells = actor?.getFlag("twilight-sword", "activeSpells") || [];
@@ -593,9 +588,9 @@ async function clearActiveSpells(actor, reason = "Cleared") {
   return true;
 }
 
-/* -------------------------------------------------------------------------- */
-/* Action Restrictions                                                        */
-/* -------------------------------------------------------------------------- */
+
+// Action Restrictions
+
 
 function getDisadvantageReason(actor, abilityKey, options = {}) {
   const statuses = getStatusIds(actor);
@@ -680,9 +675,9 @@ async function enforceTurnActor(actor, actionName = "act", { reaction = false } 
   return true;
 }
 
-/* -------------------------------------------------------------------------- */
-/* Status Processing                                                          */
-/* -------------------------------------------------------------------------- */
+
+// Status Processing
+
 
 async function processStartOfTurnStatuses(actor) {
   if (!actor) return;
@@ -766,9 +761,8 @@ async function processStartOfTurnStatuses(actor) {
   await checkZeroHearts(actor);
 }
 
-/* -------------------------------------------------------------------------- */
-/* Rolls                                                                      */
-/* -------------------------------------------------------------------------- */
+
+// Rolls 
 
 function normalizeAbilityKey(value) {
   const key = String(value || "").trim().toLowerCase();
@@ -1417,8 +1411,6 @@ async function rollInitiativeForActor(actor) {
     const roll = await new Roll(`1d12 + ${modifier}`).evaluate();
     rolls.push(roll);
 
-    // Twilight Sword: lower initiative should go first.
-    // Foundry sorts highest first, so we store the negative value.
     await combat.setInitiative(combatant.id, -roll.total);
   }
 
@@ -1518,7 +1510,6 @@ function getWeaponElementalDamageType(weapon) {
   const feats = getWeaponFeats(weapon);
   const weaponDamageType = normalizeElementalAffinity(weapon.system?.damageType);
 
-  // Backwards compatibility for older sheets that only had "Elemental".
   if (feats.has("elemental") && weaponDamageType !== "none") return weaponDamageType;
 
   return "none";
@@ -2771,10 +2762,7 @@ function isRangedAttackInCloseRange(requiredRange, rangeInfo) {
 }
 
 
-
-/* -------------------------------------------------------------------------- */
-/* Items / Spells                                                             */
-/* -------------------------------------------------------------------------- */
+// Items / Spells
 
 async function useConsumable(actor, item) {
   if (!(await enforceTurnActor(actor, "use items"))) return;
@@ -3323,9 +3311,8 @@ async function castSpell(actor, spell) {
   });
 }
 
-/* -------------------------------------------------------------------------- */
-/* Monster Actions                                                            */
-/* -------------------------------------------------------------------------- */
+
+// Monster Actions
 
 function normalizeMonsterActionColor(value) {
   const color = String(value || "").trim().toLowerCase();
@@ -3682,9 +3669,7 @@ async function useMonsterAction(actor, action, { actionIndex = null, rotation = 
   await noteMonsterActionUsed(actor, actionIndex);
 }
 
-/* -------------------------------------------------------------------------- */
-/* Actor Sheets                                                               */
-/* -------------------------------------------------------------------------- */
+// Actor Sheets 
 
 class TwilightSwordChampionSheet extends ActorSheet {
   static get defaultOptions() {
@@ -3987,19 +3972,17 @@ async _onDrop(event) {
 
   if (!item) return super._onDrop(event);
 
-  // Only custom-handle Kin items. Everything else uses normal Foundry drop behavior.
+
   if (item.type !== "kin") {
     return super._onDrop(event);
   }
 
-  // Update the actor's Kin field.
   await this.actor.update({
     "system.kin": item.name
   });
 
   const featName = item.system.featName || `${item.name} Kin Feature`;
 
-  // Keep exactly one Kin feat on the sheet, even if the same Kin is dropped again.
   const oldKinFeats = this.actor.items.filter(i =>
     i.type === "feat" &&
     (
@@ -4017,7 +4000,6 @@ async _onDrop(event) {
     );
   }
 
-  // Add the new Kin feat.
   await this.actor.createEmbeddedDocuments("Item", [{
     name: featName,
     type: "feat",
@@ -4074,7 +4056,6 @@ async _onDrop(event) {
 
   await cleanupRestStatuses(this.actor);
 
-  // Full rest removes K.O. because hearts are restored.
   await removeStatus(this.actor, "ko");
 
   for (const spell of this.actor.items.filter(i => i.type === "spell")) {
@@ -4293,9 +4274,8 @@ class TwilightSwordNPCSheet extends TwilightSwordChampionSheet {
   }
 }
 
-/* -------------------------------------------------------------------------- */
-/* Item Sheet                                                                 */
-/* -------------------------------------------------------------------------- */
+
+// Item Sheet
 
 class TwilightSwordItemSheet extends ItemSheet {
   static get defaultOptions() {
@@ -4357,9 +4337,8 @@ class TwilightSwordItemSheet extends ItemSheet {
   }
 }
 
-/* -------------------------------------------------------------------------- */
-/* Hooks                                                                      */
-/* -------------------------------------------------------------------------- */
+
+// Hooks
 
 Hooks.once("init", function () {
   console.log("Twilight Sword | Initializing");
