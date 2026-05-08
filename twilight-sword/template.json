@@ -1,0 +1,151 @@
+{
+  "Actor": {
+    "types": ["champion", "monster", "npc"],
+    "templates": {
+      "base": {
+      "description": "",
+      "notes": ""
+      },
+      "creature": {
+        "abilities": {
+          "str": { "label": "Strength", "value": 7 },
+          "agl": { "label": "Agility", "value": 7 },
+          "vit": { "label": "Vitality", "value": 7 },
+          "per": { "label": "Perception", "value": 7 },
+          "wil": { "label": "Will", "value": 7 },
+          "kno": { "label": "Knowledge", "value": 7 },
+          "cha": { "label": "Charisma", "value": 7 },
+          "ste": { "label": "Stealth", "value": 7 }
+        },
+        "hearts": {
+          "value": 17,
+          "max": 17
+        },
+        "stamina": {
+          "value": 3,
+          "max": 3
+        },
+      "armor": {
+        "value": 0
+      },
+      "inventory": {
+        "bonus": 0
+      },
+      "status": {
+          "burn": false,
+          "poison": false,
+          "ko": false,
+          "stun": false,
+          "confusion": false,
+          "wound": false,
+          "fear": false,
+          "freeze": false,
+          "blind": false,
+          "silence": false
+        }
+      }
+    },
+    "champion": {
+      "templates": ["base", "creature"],
+      "origin": "",
+      "kin": "",
+      "way": "",
+      "hope": {
+        "value": 1
+      },
+      "zin": {
+        "value": 0,
+        "green": 0,
+        "blue": 0,
+        "red": 0
+      },
+      "boon": false
+    },
+    "monster": {
+    "templates": ["base", "creature"],
+    "level": 1,
+    "damage": "1d6",
+    "damageType": "non-magical",
+    "elementalAffinity": "none",
+    "variant": {
+      "rank": "none",
+      "elementalType": "none"
+    },
+    "actions": []
+    },
+    "npc": {
+    "templates": ["base", "creature"],
+    "role": "",
+    "kin": "",
+    "disposition": ""
+    }
+  },
+  "Item": {
+    "types": ["weapon", "armor", "feat", "spell", "consumable", "gear"],
+    "templates": {
+      "base": {
+        "description": "",
+        "quantity": 1,
+        "purchaseCost": {
+          "green": 0,
+          "blue": 0,
+          "red": 0
+        }
+      }
+    },
+    "weapon": {
+      "templates": ["base"],
+      "category": "",
+      "weaponType": "M",
+      "range": "close",
+      "damage": "1d6",
+      "damageType": "non-magical",
+      "weaponFeats": "",
+      "slot": 1,
+      "hands": 1,
+      "wielded": false,
+      "equipped": false,
+      "expended": false
+    },
+    "armor": {
+      "templates": ["base"],
+      "armor": 1,
+      "armorType": "light",
+      "slot": 1,
+      "equipped": false
+    },
+    "feat": {
+      "templates": ["base"],
+      "way": "",
+      "cost": 0,
+      "passive": true
+    },
+    "spell": {
+      "templates": ["base"],
+      "spellType": "arcane",
+      "cost": 0,
+      "damage": "",
+      "damageType": "non-magical",
+      "duration": "",
+      "status": "",
+      "statusDuration": "",
+      "statusOnDamage": false,
+      "expended": false
+    },
+    "consumable": {
+      "templates": ["base"],
+      "effect": "",
+      "slot": 1,
+      "equipped": false,
+      "uses": {
+        "value": 1,
+        "max": 1
+      }
+    },
+    "gear": {
+      "templates": ["base"],
+      "slot": 1,
+      "equipped": false
+    }
+  }
+}

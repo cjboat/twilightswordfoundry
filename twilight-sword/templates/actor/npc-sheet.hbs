@@ -1,0 +1,44 @@
+<form class="{{cssClass}}" autocomplete="off">
+  <header class="sheet-header zelda-panel">
+    <img class="profile-img" src="{{actor.img}}" data-edit="img" title="{{actor.name}}" />
+
+    <div class="header-fields">
+      <h1><input name="name" type="text" value="{{actor.name}}" /></h1>
+
+      <div class="grid grid-3">
+        <label>Role <input name="system.role" type="text" value="{{system.role}}" /></label>
+        <label>Kin <input name="system.kin" type="text" value="{{system.kin}}" /></label>
+        <label>Disposition <input name="system.disposition" type="text" value="{{system.disposition}}" /></label>
+      </div>
+    </div>
+  </header>
+
+  <nav class="sheet-tabs tabs" data-group="primary">
+    <a class="item" data-tab="main">NPC</a>
+    <a class="item" data-tab="notes">Notes</a>
+  </nav>
+
+  <section class="sheet-body">
+    <div class="tab" data-group="primary" data-tab="main">
+      <h2>Abilities</h2>
+
+      <section class="abilities grid grid-2">
+        {{#each system.abilities as |ability key|}}
+          <div class="ability">
+            <label>{{ability.label}}</label>
+            <input name="system.abilities.{{key}}.value" type="number" value="{{ability.value}}" />
+            <button type="button" class="ability-roll" data-ability="{{key}}">Roll d12</button>
+          </div>
+        {{/each}}
+      </section>
+    </div>
+
+    <div class="tab" data-group="primary" data-tab="notes">
+      <h2>Description</h2>
+      <textarea name="system.description">{{system.description}}</textarea>
+
+      <h2>Notes</h2>
+      <textarea name="system.notes">{{system.notes}}</textarea>
+    </div>
+  </section>
+</form>

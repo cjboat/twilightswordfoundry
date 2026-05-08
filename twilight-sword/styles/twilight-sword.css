@@ -1,0 +1,635 @@
+:root {
+  --ts-teal: #138f8f;
+  --ts-dark-teal: #064f55;
+  --ts-gold: #d4af37;
+  --ts-parchment: #fff3cf;
+  --ts-panel: #ead18a;
+  --ts-red: #d72626;
+  --ts-green: #23a947;
+  --ts-shadow: rgba(0, 0, 0, 0.25);
+}
+
+.twilight-sword.sheet.actor {
+  font-family: Georgia, serif;
+  color: #2b2415;
+}
+
+.twilight-sword .window-content {
+  background:
+    radial-gradient(circle at top, rgba(255,255,255,.8), transparent 35%),
+    linear-gradient(180deg, #fff8dc, #e0c16b);
+  border: 4px solid var(--ts-gold);
+}
+
+.twilight-sword .zelda-panel {
+  background: linear-gradient(180deg, var(--ts-parchment), var(--ts-panel));
+  border: 3px solid var(--ts-gold);
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: 0 4px 8px var(--ts-shadow), inset 0 0 0 2px rgba(255,255,255,.45);
+}
+
+.twilight-sword .sheet-header {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.twilight-sword .profile-img {
+  width: 128px;
+  height: 128px;
+  border: 4px solid var(--ts-teal);
+  border-radius: 18px;
+  object-fit: cover;
+  background: #fff;
+}
+
+.twilight-sword .header-fields {
+  flex: 1;
+}
+
+.twilight-sword h1 input {
+  font-size: 30px;
+  font-weight: bold;
+  color: var(--ts-dark-teal);
+  background: transparent;
+  border: none;
+  border-bottom: 3px double var(--ts-gold);
+}
+
+.twilight-sword h2 {
+  color: var(--ts-dark-teal);
+  border-bottom: 3px double var(--ts-gold);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.twilight-sword h3 {
+  margin: 0 0 4px;
+  color: var(--ts-dark-teal);
+}
+
+.twilight-sword input,
+.twilight-sword textarea {
+  background: #fffaf0;
+  border: 2px solid #a97f25;
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.twilight-item-sheet .zelda-panel > label {
+  display: block;
+  margin-top: 6px;
+}
+
+.twilight-item-sheet select {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.twilight-item-sheet .damage-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 180px;
+  gap: 8px;
+  align-items: end;
+  margin-top: 6px;
+}
+
+.twilight-item-sheet .damage-row label {
+  display: block;
+}
+
+.twilight-item-sheet .damage-row input,
+.twilight-item-sheet .damage-row select {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.twilight-item-sheet .cost-row,
+.twilight-sword .currency-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  align-items: end;
+  margin-top: 8px;
+}
+
+.twilight-sword .currency-summary {
+  margin-bottom: 12px;
+}
+
+.twilight-sword .currency-summary h2 {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.twilight-item-sheet .cost-row label,
+.twilight-sword .currency-summary label {
+  display: block;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.twilight-item-sheet .cost-row input,
+.twilight-sword .currency-summary input {
+  width: 100%;
+}
+
+.twilight-sword textarea {
+  min-height: 120px;
+  width: 100%;
+}
+
+.twilight-sword .grid {
+  display: grid;
+  gap: 10px;
+}
+
+.twilight-sword .grid-2 { grid-template-columns: repeat(2, 1fr); }
+.twilight-sword .grid-3 { grid-template-columns: repeat(3, 1fr); }
+.twilight-sword .grid-5 { grid-template-columns: repeat(5, 1fr); }
+
+.twilight-sword .resources {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1fr 1fr 1.4fr;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.twilight-sword .resources input {
+  width: 48px;
+}
+
+.twilight-sword .monster-vitals {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 10px;
+}
+
+.twilight-sword .monster-vitals input {
+  width: 48px;
+}
+
+.twilight-sword .monster-roll-initiative {
+  width: auto;
+  min-width: 118px;
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 999px;
+  justify-self: end;
+  align-self: end;
+}
+
+.twilight-sword .monster-variant-note,
+.twilight-sword .monster-variant-summary p {
+  margin: 4px 0 0;
+  font-size: 12px;
+}
+
+.twilight-sword .sync-monster-variant-hearts {
+  width: auto;
+  min-width: 180px;
+  padding: 5px 12px;
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.twilight-sword .inventory-resource label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.twilight-sword .inventory-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.twilight-sword .inventory-summary strong {
+  display: block;
+  font-size: 18px;
+}
+
+.twilight-sword .over-limit {
+  color: #8a1f1f;
+}
+
+.twilight-sword .over-limit strong::after {
+  content: " OVER";
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+.twilight-sword .armor-disadvantage {
+  margin: 4px 0 0;
+  color: #8a1f1f;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.twilight-sword .armor-elemental-traits {
+  margin: 4px 0 0;
+  color: var(--ts-dark-teal);
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.twilight-sword .casting-summary {
+  margin-bottom: 12px;
+}
+
+.twilight-sword .casting-summary p {
+  margin: 4px 0 0;
+  font-size: 12px;
+}
+
+.twilight-sword .casting-blocked p {
+  color: #8a1f1f;
+  font-weight: bold;
+}
+
+.twilight-sword .active-spells {
+  margin-bottom: 12px;
+}
+
+.twilight-sword .active-spell-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.twilight-sword .active-spell {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-top: 1px solid #c29b3a;
+}
+
+.twilight-sword .active-spell:first-child {
+  border-top: 0;
+}
+
+.twilight-sword .active-spell-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 3px;
+  font-size: 12px;
+}
+
+.twilight-sword .active-spell-end {
+  min-width: 58px;
+}
+
+.twilight-sword .inventory-note {
+  margin: 4px 0 0;
+  font-size: 11px;
+  font-style: italic;
+}
+
+.twilight-sword .pip-row {
+  font-size: 24px;
+  letter-spacing: 2px;
+  line-height: 1.2;
+}
+
+.twilight-sword .heart-full {
+  color: var(--ts-red);
+  text-shadow: 1px 1px 0 #680000;
+}
+
+.twilight-sword .heart-empty {
+  color: #a89988;
+}
+
+.twilight-sword .stamina-full {
+  color: var(--ts-green);
+  text-shadow: 1px 1px 0 #064d1f;
+}
+
+.twilight-sword .stamina-empty {
+  color: #9bad9b;
+}
+
+.twilight-sword .sheet-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0;
+  border: none;
+}
+
+.twilight-sword .sheet-tabs .item {
+  padding: 8px 14px;
+  border: 2px solid #8a6517;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffe28a, #c89426);
+  color: #2d2109;
+  font-weight: bold;
+}
+
+.twilight-sword .sheet-tabs .item.active {
+  background: linear-gradient(180deg, #33c6c6, var(--ts-teal));
+  color: white;
+  text-shadow: 1px 1px 0 #063636;
+}
+
+.twilight-sword .ability {
+  background: linear-gradient(180deg, #fff7dc, #e9cf8e);
+  border: 3px solid var(--ts-teal);
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: 0 3px 6px var(--ts-shadow);
+}
+
+.twilight-sword .ability label {
+  font-weight: bold;
+  color: var(--ts-dark-teal);
+}
+
+.twilight-sword button {
+  border: 2px solid #704f0d;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffe999, #c89426);
+  color: #2b1d06;
+  font-weight: bold;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.twilight-sword button:hover {
+  filter: brightness(1.1);
+}
+
+.twilight-sword .ability-roll {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.twilight-sword .status-card {
+  background: #fff5d0;
+  border: 2px solid var(--ts-gold);
+  border-radius: 10px;
+  padding: 6px;
+  text-transform: capitalize;
+}
+
+.twilight-sword .rest-buttons {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+}
+
+.twilight-sword .items-list {
+  list-style: none;
+  padding: 0;
+}
+
+.twilight-sword .zelda-item {
+  display: grid;
+  grid-template-columns: 40px 1fr auto auto auto;
+  align-items: center;
+  gap: 8px;
+  background: #fff6d9;
+  border: 2px solid #c29b3a;
+  border-radius: 12px;
+  padding: 8px;
+  margin-bottom: 8px;
+}
+
+.ts-chat-card {
+  border: 3px solid #d4af37;
+  border-radius: 12px;
+  background: #fff3cf;
+  padding: 10px;
+}
+
+.ts-chat-card h2 {
+  color: #064f55;
+  margin-top: 0;
+}
+
+.twilight-sword .monster-actions {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+}
+
+.twilight-sword .monster-rotation-summary {
+  margin: 8px 0 10px;
+  padding: 6px 8px;
+  border: 1px solid #c9a74d;
+  background: rgba(255, 250, 240, 0.75);
+  font-size: 12px;
+}
+
+.twilight-sword .monster-action-card {
+  position: relative;
+  background: linear-gradient(180deg, #fff8df, #ead18a);
+  border: 3px solid var(--ts-gold);
+  border-radius: 16px;
+  padding: 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 3px 6px var(--ts-shadow);
+}
+
+.twilight-sword .monster-action-main {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.twilight-sword .monster-action-title-block {
+  flex: 1;
+}
+
+.twilight-sword .monster-action-card h3 {
+  margin: 0 0 6px;
+  color: var(--ts-dark-teal);
+  font-size: 20px;
+}
+
+.twilight-sword .monster-action-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.twilight-sword .monster-action-meta span {
+  background: #fff3c0;
+  border: 2px solid #b88a24;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.twilight-sword .monster-action-effect {
+  margin: 10px 0 0;
+  padding: 8px;
+  background: rgba(255, 250, 240, 0.8);
+  border: 1px solid #c9a74d;
+  border-radius: 10px;
+  line-height: 1.35;
+}
+
+.twilight-sword .monster-action-use-row {
+  margin-top: 10px;
+}
+
+.twilight-sword .monster-action-use-row .monster-action-use {
+  width: 100%;
+}
+
+.twilight-sword .monster-action-menu-wrap {
+  position: relative;
+  margin-left: auto;
+}
+
+.twilight-sword .monster-action-menu {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  font-size: 18px;
+  line-height: 18px;
+  border-radius: 999px;
+}
+
+.twilight-sword .monster-action-menu-content {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 38px;
+  min-width: 120px;
+  z-index: 20;
+  background: #fff4d6;
+  border: 2px solid var(--ts-gold);
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow: 0 4px 8px var(--ts-shadow);
+}
+
+.twilight-sword .monster-action-menu-wrap.open .monster-action-menu-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.twilight-sword .monster-action-menu-content button {
+  width: 100%;
+  border-radius: 8px;
+  font-size: 12px;
+  padding: 5px 8px;
+}
+
+.twilight-sword .monster-action-delete {
+  background: linear-gradient(180deg, #f4d6c9, #c7785f);
+  border-color: #7d2f1e;
+}
+
+.twilight-sword .status-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-start;
+  border-radius: 10px;
+  padding: 6px;
+  background: #fff5d0;
+  border: 2px solid var(--ts-gold);
+  color: #2b2415;
+}
+
+.twilight-sword .status-toggle img {
+  width: 22px;
+  height: 22px;
+  border: none;
+}
+
+.twilight-sword .status-toggle.active {
+  background: linear-gradient(180deg, #33c6c6, var(--ts-teal));
+  color: white;
+  text-shadow: 1px 1px 0 #063636;
+}
+
+.item.zelda-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+}
+
+.item-controls {
+  margin-left: auto;
+
+  display: flex;
+  flex-direction: row;
+
+  gap: 4px;
+
+  align-items: center;
+}
+
+.item-controls button {
+  width: 24px;
+  height: 24px;
+
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 14px;
+  line-height: 1;
+}
+
+.zelda-item.spell-expended,
+.zelda-item.weapon-expended {
+  opacity: 0.45 !important;
+  filter: grayscale(80%) !important;
+  background: rgba(80, 80, 80, 0.25) !important;
+}
+
+.zelda-item.spell-expended strong::after {
+  content: "  EXPENDED";
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: bold;
+  color: #8a1f1f;
+  letter-spacing: 1px;
+}
+
+.zelda-item.weapon-expended strong::after {
+  content: "  PICK UP";
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: bold;
+  color: #8a1f1f;
+  letter-spacing: 1px;
+}
+
+input[name="system.kin"][readonly] {
+  opacity: 0.8;
+  cursor: not-allowed;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.feat-chat {
+  width: auto;
+  min-width: 48px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+.kin-feat .item-delete {
+  opacity: 0.35;
+  pointer-events: none;
+}

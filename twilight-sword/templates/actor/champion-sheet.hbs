@@ -1,0 +1,556 @@
+<form class="{{cssClass}}" autocomplete="off">
+  <header class="sheet-header zelda-panel">
+    <img class="profile-img" src="{{actor.img}}" data-edit="img" title="{{actor.name}}" />
+
+    <div class="header-fields">
+      <h1>
+        <input name="name" type="text" value="{{actor.name}}" placeholder="Champion Name" />
+      </h1>
+
+      <div class="grid grid-3">
+        <label>Origin <input name="system.origin" type="text" value="{{system.origin}}" /></label>
+        <label>
+          Kin
+          <input
+            name="system.kin"
+            type="text"
+            value="{{system.kin}}"
+            readonly
+            placeholder="Drag Kin item here"
+          />
+        </label>
+        <label>Way <input name="system.way" type="text" value="{{system.way}}" /></label>
+      </div>
+    </div>
+  </header>
+
+  <section class="zelda-panel resources">
+    <div>
+      <h3>Hearts</h3>
+
+      <div class="pip-row">
+        {{#each hearts as |pip|}}
+          <span class="{{#if pip.filled}}heart-full{{else}}heart-empty{{/if}}">
+            ♥
+          </span>
+        {{/each}}
+      </div>
+
+      <input name="system.hearts.value" type="number" value="{{system.hearts.value}}" />
+      /
+      <input name="system.hearts.max" type="number" value="{{system.hearts.max}}" />
+    </div>
+
+    <div>
+      <h3>Stamina</h3>
+
+      <div class="pip-row">
+        {{#each stamina as |pip|}}
+          <span class="{{#if pip.filled}}stamina-full{{else}}stamina-empty{{/if}}">
+            ◆
+          </span>
+        {{/each}}
+      </div>
+
+      <input name="system.stamina.value" type="number" value="{{system.stamina.value}}" />
+      /
+      <input name="system.stamina.max" type="number" value="{{system.stamina.max}}" />
+    </div>
+
+    <div>
+      <h3>Armor</h3>
+      <input name="system.armor.value" type="number" value="{{system.armor.value}}" />
+      {{#if armorDisadvantage.hasPenalty}}
+        <p class="armor-disadvantage">{{armorDisadvantage.text}}</p>
+      {{/if}}
+      {{#if armorElementalTraits.hasTraits}}
+        <p class="armor-elemental-traits">{{armorElementalTraits.text}}</p>
+      {{/if}}
+    </div>
+
+    <div>
+      <h3>Hope</h3>
+      <input name="system.hope.value" type="number" value="{{system.hope.value}}" />
+    </div>
+
+    <div class="inventory-resource {{#if inventory.encumbered}}over-limit{{/if}}">
+      <h3>Inventory</h3>
+      <strong>{{inventory.used}} / {{inventory.max}}</strong>
+      <label>
+        Bonus
+        <input name="system.inventory.bonus" type="number" value="{{inventory.bonus}}" />
+      </label>
+    </div>
+  </section>
+
+  <nav class="sheet-tabs tabs" data-group="primary">
+    <a class="item" data-tab="main">Champion</a>
+    <a class="item" data-tab="combat">Combat</a>
+    <a class="item" data-tab="magic">Magic</a>
+    <a class="item" data-tab="inventory">Inventory</a>
+    <a class="item" data-tab="notes">Notes</a>
+  </nav>
+
+  <section class="sheet-body">
+
+    <!-- MAIN TAB -->
+    <div class="tab" data-group="primary" data-tab="main">
+
+      <h2>Abilities</h2>
+
+      <section class="abilities grid grid-2">
+        {{#each system.abilities as |ability key|}}
+          <div class="ability">
+            <label>{{ability.label}}</label>
+
+            <input
+              name="system.abilities.{{key}}.value"
+              type="number"
+              value="{{ability.value}}"
+            />
+
+            <button
+              type="button"
+              class="ability-roll"
+              data-ability="{{key}}"
+            >
+              Roll d12
+            </button>
+          </div>
+        {{/each}}
+      </section>
+
+      <h2>Status Effects</h2>
+
+      <section class="statuses grid grid-5">
+        {{#each statusEffects as |effect|}}
+          <button
+            type="button"
+            class="status-toggle {{#if effect.active}}active{{/if}}"
+            data-status-id="{{effect.id}}"
+          >
+            <img src="{{effect.icon}}" />
+            <span>{{effect.name}}</span>
+          </button>
+        {{/each}}
+      </section>
+
+      <section class="rest-buttons">
+        <button type="button" class="short-rest">
+          Short Rest
+        </button>
+
+        <button type="button" class="full-rest">
+          Full Rest
+        </button>
+
+        <button type="button" class="roll-initiative">
+          Roll Initiative
+        </button>
+      </section>
+    </div>
+
+    <!-- COMBAT TAB -->
+    <div class="tab" data-group="primary" data-tab="combat">
+
+      <h2>Weapons</h2>
+
+      <ol class="items-list">
+        {{#each weapons as |item|}}
+          <li class="item zelda-item {{#unless (tsWeaponAvailable item)}}weapon-expended{{/unless}}" data-item-id="{{item.id}}">
+
+            <img src="{{item.img}}" width="32" height="32" />
+
+            <strong>{{item.name}}</strong>
+
+            <span>{{item.system.weaponType}}</span>
+            <span>{{item.system.damage}}</span>
+            <span>Qty {{tsItemQuantity item}}</span>
+            {{#if (tsHasCost item)}}<span>{{tsFormatCost item}}</span>{{/if}}
+            <span>{{tsEquipmentSlots item}} EQ</span>
+            <span>{{tsHandSlots item}} Hand</span>
+
+            {{#unless (tsWeaponAvailable item)}}
+              <button type="button" class="weapon-pick-up" data-item-id="{{item.id}}">
+                Pick Up
+              </button>
+            {{else}}
+              <button type="button" class="weapon-attack">
+                Attack
+              </button>
+
+              {{#if (tsHasAnyWeaponFeat item "thrown" "boomerang")}}
+                <button type="button" class="weapon-throw" data-item-id="{{item.id}}">
+                  Throw
+                </button>
+              {{/if}}
+
+              {{#if (tsHasWeaponFeat item "arcane")}}
+                <button type="button" class="weapon-arcane" data-item-id="{{item.id}}">
+                  Magic Missile
+                </button>
+              {{/if}}
+
+              {{#if (tsHasAnyWeaponFeat item "versatile" "two-handed")}}
+                <button type="button" class="weapon-two-hands" data-item-id="{{item.id}}">
+                  2H Attack
+                </button>
+              {{/if}}
+            {{/unless}}
+
+            <button type="button" class="item-equip">
+              {{#if item.system.equipped}}
+                Equipped
+              {{else}}
+                Equip
+              {{/if}}
+            </button>
+
+            <button type="button" class="item-wield">
+              {{#if item.system.wielded}}
+                Wielded
+              {{else}}
+                Wield
+              {{/if}}
+            </button>
+
+            <div class="item-controls">
+              <button
+                type="button"
+                class="item-edit"
+                data-item-id="{{item.id}}"
+              >
+                ☰
+              </button>
+
+              <button
+                type="button"
+                class="item-delete"
+                data-item-id="{{item.id}}"
+              >
+                ✕
+              </button>
+            </div>
+          </li>
+        {{/each}}
+      </ol>
+
+      <h2>Armor</h2>
+
+      <ol class="items-list">
+        {{#each armorItems as |item|}}
+          <li class="item zelda-item" data-item-id="{{item.id}}">
+
+            <img src="{{item.img}}" width="32" height="32" />
+
+            <strong>{{item.name}}</strong>
+
+            <span>Armor {{item.system.armor}}</span>
+            <span>{{item.system.armorType}}</span>
+            {{#if (tsHasCost item)}}<span>{{tsFormatCost item}}</span>{{/if}}
+            <span>{{tsItemSlots item}} Slots</span>
+
+            <button type="button" class="item-equip">
+              {{#if item.system.equipped}}
+                Equipped
+              {{else}}
+                Equip
+              {{/if}}
+            </button>
+
+            <div class="item-controls">
+              <button
+                type="button"
+                class="item-edit"
+                data-item-id="{{item.id}}"
+              >
+                ☰
+              </button>
+
+              <button
+                type="button"
+                class="item-delete"
+                data-item-id="{{item.id}}"
+              >
+                ✕
+              </button>
+            </div>
+          </li>
+        {{/each}}
+      </ol>
+
+    </div>
+
+    <!-- MAGIC TAB -->
+    <div class="tab" data-group="primary" data-tab="magic">
+
+      <section class="zelda-panel casting-summary {{#if castingRestrictions.blocked}}casting-blocked{{/if}}">
+        <h2>Casting</h2>
+
+        {{#if castingRestrictions.blocked}}
+          {{#each castingRestrictions.blockers as |blocker|}}
+            <p>{{blocker}}</p>
+          {{/each}}
+        {{else}}
+          <p>No armor or shield restrictions.</p>
+        {{/if}}
+
+        {{#each castingRestrictions.allowances as |allowance|}}
+          <p>{{allowance}}</p>
+        {{/each}}
+      </section>
+
+      <section class="zelda-panel active-spells">
+        <h2>Active Spells</h2>
+
+        {{#if activeSpells.length}}
+          <ol class="active-spell-list">
+            {{#each activeSpells as |spell|}}
+              <li class="active-spell" data-active-spell-id="{{spell.id}}">
+                <div class="active-spell-info">
+                  <strong>{{spell.name}}</strong>
+                  <div class="active-spell-meta">
+                    {{#if spell.duration}}<span>{{spell.duration}}</span>{{/if}}
+                    {{#if spell.target}}<span>Target: {{spell.target}}</span>{{/if}}
+                    {{#if spell.startedRound}}<span>Round {{spell.startedRound}}</span>{{/if}}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  class="active-spell-end"
+                  data-active-spell-id="{{spell.id}}"
+                >
+                  End
+                </button>
+              </li>
+            {{/each}}
+          </ol>
+        {{else}}
+          <p>No active spells.</p>
+        {{/if}}
+      </section>
+
+      <h2>Spells</h2>
+
+      <ol class="items-list">
+        {{#each spells as |item|}}
+          <li
+            class="item zelda-item spell-row {{#if item.system.expended}}spell-expended{{/if}}"
+            data-item-id="{{item.id}}"
+            {{#if item.magicSpellSourceId}}data-magic-spell-source-id="{{item.magicSpellSourceId}}" data-magic-spell-name="{{item.magicSpellName}}"{{/if}}
+          >
+
+            <img src="{{item.img}}" width="32" height="32" />
+
+            <strong>{{item.name}}</strong>
+
+            <span>{{tsSpellTypeLabel item.system.spellType}}</span>
+
+            <span>{{item.system.damage}}</span>
+            {{#if item.magicSpellSourceName}}<span>From {{item.magicSpellSourceName}}</span>{{/if}}
+
+            <button
+              type="button"
+              class="spell-cast"
+              data-item-id="{{item.id}}"
+              {{#if item.magicSpellSourceId}}data-magic-spell-source-id="{{item.magicSpellSourceId}}" data-magic-spell-name="{{item.magicSpellName}}"{{/if}}
+            >
+              Cast
+            </button>
+
+            {{#unless item.magicSpellSourceId}}
+            <div class="item-controls">
+              <button
+                type="button"
+                class="item-edit"
+                data-item-id="{{item.id}}"
+              >
+                ☰
+              </button>
+
+              <button
+                type="button"
+                class="item-delete"
+                data-item-id="{{item.id}}"
+              >
+                ✕
+              </button>
+            </div>
+            {{/unless}}
+
+          </li>
+        {{/each}}
+      </ol>
+
+    </div>
+
+    <!-- INVENTORY TAB -->
+    <div class="tab" data-group="primary" data-tab="inventory">
+
+      <section class="currency-summary zelda-panel">
+        <h2>Zin</h2>
+
+        <label>
+          Red
+          <input name="system.zin.red" type="number" min="0" value="{{currency.red}}" />
+        </label>
+
+        <label>
+          Blue
+          <input name="system.zin.blue" type="number" min="0" value="{{currency.blue}}" />
+        </label>
+
+        <label>
+          Green
+          <input name="system.zin.green" type="number" min="0" value="{{currency.green}}" />
+        </label>
+      </section>
+
+      <section class="inventory-summary zelda-panel">
+        <div class="{{#if inventory.encumbered}}over-limit{{/if}}">
+          <h3>Inventory Points</h3>
+          <strong>{{inventory.used}} / {{inventory.max}}</strong>
+        </div>
+
+        <div class="{{#if inventory.equipmentOver}}over-limit{{/if}}">
+          <h3>Ready Equipment</h3>
+          <strong>{{inventory.equipmentUsed}} / {{inventory.equipmentMax}}</strong>
+        </div>
+
+        <div class="{{#if inventory.handsOver}}over-limit{{/if}}">
+          <h3>Hands</h3>
+          <strong>{{inventory.handsUsed}} / {{inventory.handsMax}}</strong>
+        </div>
+
+        <div>
+          <h3>Worn Armor</h3>
+            <strong>
+              {{#if equippedArmor}}
+                {{equippedArmor.name}}
+            {{else}}
+              None
+            {{/if}}
+          </strong>
+          {{#if armorDisadvantage.hasPenalty}}
+            <p class="armor-disadvantage">{{armorDisadvantage.text}}</p>
+          {{/if}}
+          {{#if armorElementalTraits.hasTraits}}
+            <p class="armor-elemental-traits">{{armorElementalTraits.text}}</p>
+          {{/if}}
+          {{#if equippedArmor}}
+            <p class="inventory-note">Worn armor does not use Inventory Points.</p>
+          {{/if}}
+        </div>
+      </section>
+
+      <h2>Feats</h2>
+
+      <ol class="items-list">
+        {{#each feats as |item|}}
+          <li class="item zelda-item feat-row {{#if item.flags.twilight-sword.kinFeat}}kin-feat{{/if}}" data-item-id="{{item.id}}">
+            <img src="{{item.img}}" width="32" height="32" />
+
+            <strong>{{item.name}}</strong>
+
+            <span>{{item.system.way}}</span>
+
+            <button type="button" class="feat-chat" data-item-id="{{item.id}}">
+              Chat
+            </button>
+
+            <div class="item-controls">
+              <button type="button" class="item-edit" data-item-id="{{item.id}}">☰</button>
+              <button type="button" class="item-delete" data-item-id="{{item.id}}">✕</button>
+            </div>
+          </li>
+        {{/each}}
+      </ol>
+
+      <h2>Gear</h2>
+
+      <ol class="items-list">
+        {{#each gear as |item|}}
+          <li class="item zelda-item" data-item-id="{{item.id}}">
+
+            <img src="{{item.img}}" width="32" height="32" />
+
+            <strong>{{item.name}}</strong>
+
+            <span>{{item.type}}</span>
+            <span>{{tsItemSlots item}} Slots</span>
+            <span>{{tsEquipmentSlots item}} EQ</span>
+            {{#if (tsHasCost item)}}<span>{{tsFormatCost item}}</span>{{/if}}
+
+            {{#if item.system.uses}}
+              <span>
+                Uses:
+                {{item.system.uses.value}}
+                /
+                {{item.system.uses.max}}
+              </span>
+            {{/if}}
+
+            {{#if item.system.effect}}
+              <span>{{item.system.effect}}</span>
+            {{/if}}
+
+            <button
+              type="button"
+              class="consume-item"
+              data-item-id="{{item.id}}"
+            >
+              Use
+            </button>
+
+            <button type="button" class="item-equip">
+              {{#if item.system.equipped}}
+                Stow
+              {{else}}
+                Ready
+              {{/if}}
+            </button>
+
+            <div class="item-controls">
+              <button
+                type="button"
+                class="item-edit"
+                data-item-id="{{item.id}}"
+              >
+                ☰
+              </button>
+
+              <button
+                type="button"
+                class="item-delete"
+                data-item-id="{{item.id}}"
+              >
+                ✕
+              </button>
+            </div>
+
+          </li>
+        {{/each}}
+      </ol>
+
+    </div>
+
+    <!-- NOTES TAB -->
+    <div class="tab" data-group="primary" data-tab="notes">
+
+      <h2>Description</h2>
+
+      <textarea name="system.description">
+{{system.description}}
+      </textarea>
+
+      <h2>Notes</h2>
+
+      <textarea name="system.notes">
+{{system.notes}}
+      </textarea>
+
+    </div>
+
+  </section>
+</form>

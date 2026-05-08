@@ -1,0 +1,278 @@
+<form class="{{cssClass}} twilight-item-sheet" autocomplete="off">
+  <header class="sheet-header zelda-panel">
+    <img class="profile-img" src="{{item.img}}" data-edit="img" title="{{item.name}}" />
+
+    <div class="header-fields">
+      <h1>
+        <input name="name" type="text" value="{{item.name}}" />
+      </h1>
+
+      <div class="item-type">
+        {{item.type}}
+      </div>
+    </div>
+  </header>
+
+  <section class="zelda-panel">
+    <button type="button" class="use-item">Use / Cast</button>
+    {{#if isPurchasable}}
+      <button type="button" class="buy-item">Buy</button>
+    {{/if}}
+
+    {{#unless isSpell}}
+      <label>
+        Quantity
+        <input name="system.quantity" type="number" min="0" value="{{system.quantity}}" />
+      </label>
+    {{/unless}}
+
+    {{#if isPurchasable}}
+      <div class="cost-row">
+        <label>
+          Red Cost
+          <input name="system.purchaseCost.red" type="number" min="0" value="{{system.purchaseCost.red}}" />
+        </label>
+
+        <label>
+          Blue Cost
+          <input name="system.purchaseCost.blue" type="number" min="0" value="{{system.purchaseCost.blue}}" />
+        </label>
+
+        <label>
+          Green Cost
+          <input name="system.purchaseCost.green" type="number" min="0" value="{{system.purchaseCost.green}}" />
+        </label>
+      </div>
+    {{/if}}
+  </section>
+  
+  <section class="zelda-panel">
+    {{#if isWeapon}}
+      <h2>Weapon</h2>
+
+      <div class="damage-row">
+        <label>
+          Damage
+          <input name="system.damage" type="text" value="{{system.damage}}" />
+        </label>
+
+        <label>
+          Type
+          <select name="system.damageType">
+            {{#select damageType}}
+              <option value="non-magical">Non-magical</option>
+              <option value="fire">Fire</option>
+              <option value="ice">Ice</option>
+              <option value="wind">Wind</option>
+              <option value="earth">Earth</option>
+              <option value="thunder">Thunder</option>
+              <option value="water">Water</option>
+              <option value="light">Light</option>
+              <option value="darkness">Darkness</option>
+            {{/select}}
+          </select>
+        </label>
+      </div>
+
+      <label>Range</label>
+      <input name="system.range" type="text" value="{{system.range}}" />
+
+      <label>Type</label>
+      <select name="system.weaponType">
+        {{#select system.weaponType}}
+          <option value="M">M - Melee</option>
+          <option value="S">S - Shield</option>
+          <option value="R">R - Ranged</option>
+        {{/select}}
+      </select>
+
+      <label>Weapon Feats</label>
+      <input
+        name="system.weaponFeats"
+        type="text"
+        value="{{system.weaponFeats}}"
+        placeholder="accurate, defensive, finesse"
+      />
+
+      <label>Inventory Slots</label>
+      <input name="system.slot" type="number" min="0" value="{{system.slot}}" />
+
+      <label>Hands</label>
+      {{#if (tsHasWeaponFeat item "two-handed")}}
+        <input name="system.hands" type="number" min="2" max="2" value="2" />
+      {{else}}
+        <input name="system.hands" type="number" min="1" max="2" value="{{system.hands}}" />
+      {{/if}}
+
+      <label>
+        <input name="system.expended" type="checkbox" {{checked system.expended}} />
+        Expended / Needs Pick Up
+      </label>
+
+      <label>
+        <input name="system.equipped" type="checkbox" {{checked system.equipped}} />
+        Equipped
+      </label>
+
+      <label>
+        <input name="system.wielded" type="checkbox" {{checked system.wielded}} />
+        Wielded
+      </label>
+    {{/if}}
+
+    {{#if isArmor}}
+      <h2>Armor</h2>
+
+      <label>Armor Value</label>
+      <input name="system.armor" type="number" value="{{system.armor}}" />
+
+      <label>Armor Type</label>
+      <select name="system.armorType">
+        {{#select armorType}}
+          <option value="clothing">Clothing</option>
+          <option value="light">Light Armor</option>
+          <option value="medium">Medium Armor</option>
+          <option value="heavy">Heavy Armor</option>
+        {{/select}}
+      </select>
+
+      <label>Inventory Slots</label>
+      <input name="system.slot" type="number" min="0" value="{{system.slot}}" />
+
+      <label>
+        <input name="system.equipped" type="checkbox" {{checked system.equipped}} />
+        Equipped
+      </label>
+    {{/if}}
+
+    {{#if isSpell}}
+      <h2>Spell</h2>
+
+      <label>Spell Type</label>
+      <select name="system.spellType">
+        {{#select spellType}}
+          <option value="arcane">Arcane</option>
+          <option value="blessing">Blessing</option>
+          <option value="common">Common</option>
+        {{/select}}
+      </select>
+
+      <label>Roll</label>
+      <input name="system.roll" type="text" value="{{system.roll}}" />
+
+      <label>Range</label>
+      <input name="system.range" type="text" value="{{system.range}}" />
+
+      <label>Duration</label>
+      <input name="system.duration" type="text" value="{{system.duration}}" />
+
+      <label>Status</label>
+      <select name="system.status">
+        {{#select status}}
+          <option value="">None</option>
+          <option value="burn">Burn</option>
+          <option value="poison">Poison</option>
+          <option value="ko">K.O.</option>
+          <option value="stun">Stun</option>
+          <option value="confusion">Confusion</option>
+          <option value="wound">Wound</option>
+          <option value="fear">Fear</option>
+          <option value="freeze">Freeze</option>
+          <option value="blind">Blind</option>
+          <option value="silence">Silence</option>
+        {{/select}}
+      </select>
+
+      <label>Status Duration</label>
+      <input name="system.statusDuration" type="text" value="{{system.statusDuration}}" placeholder="Blank, 1, or 1d6 rounds" />
+
+      <label>
+        <input name="system.statusOnDamage" type="checkbox" {{checked system.statusOnDamage}} />
+        Only Apply Status if Damage Gets Through
+      </label>
+
+      <div class="damage-row">
+        <label>
+          Damage
+          <input name="system.damage" type="text" value="{{system.damage}}" />
+        </label>
+
+        <label>
+          Type
+          <select name="system.damageType">
+            {{#select damageType}}
+              <option value="non-magical">Non-magical</option>
+              <option value="fire">Fire</option>
+              <option value="ice">Ice</option>
+              <option value="wind">Wind</option>
+              <option value="earth">Earth</option>
+              <option value="thunder">Thunder</option>
+              <option value="water">Water</option>
+              <option value="light">Light</option>
+              <option value="darkness">Darkness</option>
+            {{/select}}
+          </select>
+        </label>
+      </div>
+
+      <label>
+        <input name="system.expended" type="checkbox" {{checked system.expended}} />
+        Expended
+      </label>
+    {{/if}}
+
+    {{#if isFeat}}
+      <h2>Feat</h2>
+
+      <label>Way</label>
+      <input name="system.way" type="text" value="{{system.way}}" />
+
+      <label>Cost</label>
+      <input name="system.cost" type="number" value="{{system.cost}}" />
+
+      <label>
+        <input name="system.passive" type="checkbox" {{checked system.passive}} />
+        Passive
+      </label>
+    {{/if}}
+
+    {{#if isKin}}
+  <h2>Kin Details</h2>
+
+  <label>
+    Kin Feature Name
+    <input name="system.featName" type="text" value="{{system.featName}}" />
+  </label>
+
+  <label>
+    Way / Category
+    <input name="system.way" type="text" value="{{system.way}}" />
+  </label>
+
+  <label>
+    Kin Feature Description
+    <textarea name="system.featDescription">{{system.featDescription}}</textarea>
+  </label>
+
+  <label>
+    Effect
+    <textarea name="system.effect">{{system.effect}}</textarea>
+  </label>
+{{/if}}
+
+    {{#if isGear}}
+      <h2>Inventory</h2>
+
+      <label>Inventory Slots</label>
+      <input name="system.slot" type="number" min="0" value="{{system.slot}}" />
+
+      <label>
+        <input name="system.equipped" type="checkbox" {{checked system.equipped}} />
+        Equipped / Ready
+      </label>
+    {{/if}}
+
+    <h2>Description</h2>
+    <textarea name="system.description">{{system.description}}</textarea>
+  </section>
+</form>

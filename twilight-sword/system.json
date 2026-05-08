@@ -1,0 +1,44 @@
+{
+  "id": "twilight-sword",
+  "title": "Twilight Sword",
+  "description": "A custom Foundry VTT v13 system for Twilight Sword.",
+  "version": "0.1.0",
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13"
+  },
+  "authors": [
+    {
+      "name": "CJ Boat"
+    }
+  ],
+  "esmodules": [
+    "scripts/twilight-sword.js"
+  ],
+  "styles": [
+    "styles/twilight-sword.css"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "documentTypes": {
+    "Actor": {
+      "champion": {},
+      "monster": {},
+      "npc": {}
+    },
+    "Item": {
+      "weapon": {},
+      "armor": {},
+      "feat": {},
+      "spell": {},
+      "consumable": {},
+      "gear": {},
+      "kin": {}
+    }
+  }
+}

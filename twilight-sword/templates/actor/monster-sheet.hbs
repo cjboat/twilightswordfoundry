@@ -1,0 +1,214 @@
+<form class="{{cssClass}}" autocomplete="off">
+  <header class="sheet-header zelda-panel">
+    <img class="profile-img" src="{{actor.img}}" data-edit="img" title="{{actor.name}}" />
+
+    <div class="header-fields">
+      <h1><input name="name" type="text" value="{{actor.name}}" /></h1>
+
+      <div class="grid grid-3">
+        <label>Base Threat <input name="system.level" type="number" value="{{system.level}}" /></label>
+        <label>Default Damage <input name="system.damage" type="text" value="{{system.damage}}" /></label>
+        <label>
+          Type
+          <select name="system.damageType">
+            {{#select damageType}}
+              <option value="non-magical">Non-magical</option>
+              <option value="fire">Fire</option>
+              <option value="ice">Ice</option>
+              <option value="wind">Wind</option>
+              <option value="earth">Earth</option>
+              <option value="thunder">Thunder</option>
+              <option value="water">Water</option>
+              <option value="light">Light</option>
+              <option value="darkness">Darkness</option>
+            {{/select}}
+          </select>
+        </label>
+        <label>Base Armor <input name="system.armor.value" type="number" value="{{system.armor.value}}" /></label>
+        <label>
+          Base Elemental Affinity
+          <select name="system.elementalAffinity">
+            {{#select elementalAffinity}}
+              <option value="none">None</option>
+              <option value="fire">Fire</option>
+              <option value="ice">Ice</option>
+              <option value="wind">Wind</option>
+              <option value="earth">Earth</option>
+              <option value="thunder">Thunder</option>
+              <option value="water">Water</option>
+              <option value="light">Light</option>
+              <option value="darkness">Darkness</option>
+            {{/select}}
+          </select>
+        </label>
+        <label>
+          Variant
+          <select name="system.variant.rank">
+            {{#select monsterVariant.rank}}
+              <option value="none">None</option>
+              <option value="blue">Blue</option>
+              <option value="red">Red</option>
+              <option value="black">Black</option>
+            {{/select}}
+          </select>
+        </label>
+        <label>
+          Elemental Variant
+          <select name="system.variant.elementalType">
+            {{#select monsterVariant.elementalType}}
+              <option value="none">None</option>
+              <option value="fire">Fire</option>
+              <option value="ice">Ice</option>
+              <option value="wind">Wind</option>
+              <option value="earth">Earth</option>
+              <option value="thunder">Thunder</option>
+              <option value="water">Water</option>
+              <option value="light">Light</option>
+              <option value="darkness">Darkness</option>
+            {{/select}}
+          </select>
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <section class="zelda-panel monster-vitals">
+    <div class="monster-hearts">
+      <h3>Hearts</h3>
+      <div class="pip-row">
+        {{#each hearts as |pip|}}
+          <span class="{{#if pip.filled}}heart-full{{else}}heart-empty{{/if}}">♥</span>
+        {{/each}}
+      </div>
+      <input name="system.hearts.value" type="number" value="{{system.hearts.value}}" />
+      /
+      <input name="system.hearts.max" type="number" value="{{system.hearts.max}}" />
+      {{#if monsterVariant.hasVariant}}
+        <p class="monster-variant-note">Effective Max: {{monsterVariant.effectiveHeartsMax}}</p>
+        <button type="button" class="sync-monster-variant-hearts">Set Current to Effective Max</button>
+      {{/if}}
+    </div>
+
+    <div class="monster-stamina">
+      <h3>Stamina</h3>
+      <input name="system.stamina.value" type="number" value="{{system.stamina.value}}" />
+      /
+      <input name="system.stamina.max" type="number" value="{{system.stamina.max}}" />
+    </div>
+
+    <button type="button" class="roll-initiative monster-roll-initiative">
+      Roll Initiative
+    </button>
+  </section>
+
+  <nav class="sheet-tabs tabs" data-group="primary">
+    <a class="item" data-tab="actions">Actions</a>
+    <a class="item" data-tab="main">Monster</a>
+    <a class="item" data-tab="notes">Notes</a>
+  </nav>
+
+  <section class="sheet-body">
+    <div class="tab" data-group="primary" data-tab="actions">
+      <h2>Monster Actions</h2>
+
+      <button type="button" class="add-monster-action">+ Add Action</button>
+      <button type="button" class="random-monster-action">Roll Random Action</button>
+      <button type="button" class="start-monster-rotation">Start Rotation</button>
+      <button type="button" class="next-monster-rotation">Next Rotation Action</button>
+      <button type="button" class="break-monster-rotation">Break Rotation</button>
+      <button type="button" class="import-monster-actions">Import Actions JSON</button>
+
+      <section class="monster-rotation-summary">
+        <strong>Rotation:</strong>
+        {{#if monsterRotation.active}}
+          Active. Next {{monsterRotation.nextActionNumber}}: {{monsterRotation.nextActionName}}
+        {{else}}
+          Broken / Random.{{#if monsterRotation.nextActionName}} Next if started: {{monsterRotation.nextActionNumber}}: {{monsterRotation.nextActionName}}{{/if}}
+        {{/if}}
+      </section>
+
+      <ol class="monster-actions">
+        {{#each system.actions as |action index|}}
+          <li class="monster-action-card" data-action-index="{{index}}">
+            <div class="monster-action-main">
+              <div class="monster-action-title-block">
+                <h3>{{action.name}}</h3>
+
+                <div class="monster-action-meta">
+                  {{#if action.roll}}<span>Roll: {{action.roll}}</span>{{/if}}
+                  {{#if action.damage}}<span>Damage: {{action.damage}}</span>{{/if}}
+                  {{#if action.damage}}<span>Type: {{tsDamageTypeLabel action.damageType}}</span>{{/if}}
+                  {{#if action.special}}<span>Special: {{action.staminaCost}} STA</span>{{/if}}
+                  {{#if (tsHasMonsterActionColor action.actionColor)}}<span>{{tsMonsterActionColorLabel action.actionColor}}</span>{{/if}}
+                  {{#if action.ignoreArmor}}<span>Ignores Armor</span>{{/if}}
+                  {{#if action.status}}<span>Status: {{tsStatusLabel action.status}}</span>{{/if}}
+                  {{#if action.statusDuration}}<span>Duration: {{action.statusDuration}} rounds</span>{{/if}}
+                  {{#if action.statusOnDamage}}<span>On Damage</span>{{/if}}
+                </div>
+              </div>
+
+              <div class="monster-action-menu-wrap">
+                <button type="button" class="monster-action-menu">☰</button>
+
+                <div class="monster-action-menu-content">
+                  <button type="button" class="monster-action-edit">Edit</button>
+                  <button type="button" class="monster-action-delete">Delete</button>
+                </div>
+              </div>
+            </div>
+
+            <p class="monster-action-effect">{{action.effect}}</p>
+
+            <div class="monster-action-use-row">
+              <button type="button" class="monster-action-use">Use Action</button>
+            </div>
+          </li>
+        {{/each}}
+      </ol>
+    </div>
+
+    <div class="tab" data-group="primary" data-tab="main">
+      <section class="zelda-panel monster-variant-summary">
+        <h2>Variant</h2>
+        <p><strong>{{monsterVariant.rankLabel}}</strong>{{#if monsterVariant.hasVariant}} Variant{{/if}}</p>
+        {{#if monsterVariant.hasVariant}}
+          <p>Threat {{monsterVariant.baseThreat}} -> {{monsterVariant.effectiveThreat}}</p>
+          <p>Hearts {{monsterVariant.baseHeartsMax}} -> {{monsterVariant.effectiveHeartsMax}}</p>
+          <p>Armor {{monsterVariant.baseArmor}} -> {{monsterVariant.effectiveArmor}}</p>
+          {{#if monsterVariant.damageBonus}}<p>Monster attacks deal +{{monsterVariant.damageBonus}} damage.</p>{{/if}}
+          {{#if monsterVariant.text}}<p>{{monsterVariant.text}}</p>{{/if}}
+        {{else}}
+          <p>No variant bonuses.</p>
+        {{/if}}
+      </section>
+
+      <section class="zelda-panel">
+        <h2>Effective Elemental Affinity</h2>
+        <p>{{tsElementalAffinityLabel effectiveElementalAffinity}}</p>
+      </section>
+
+      <h2>Status Effects</h2>
+
+        <section class="statuses grid grid-5">
+          {{#each statusEffects as |effect|}}
+            <button
+              type="button"
+              class="status-toggle {{#if effect.active}}active{{/if}}"
+              data-status-id="{{effect.id}}"
+            >
+              <img src="{{effect.icon}}" />
+              <span>{{effect.name}}</span>
+            </button>
+          {{/each}}
+        </section>
+    </div>
+
+    <div class="tab" data-group="primary" data-tab="notes">
+      <h2>Description</h2>
+      <textarea name="system.description">{{system.description}}</textarea>
+
+      <h2>Notes</h2>
+      <textarea name="system.notes">{{system.notes}}</textarea>
+    </div>
+  </section>
+</form>
