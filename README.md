@@ -16,3 +16,9 @@ A Foundry v13 system for Twilight Sword by Two Little Mice
 - Automated some feats to allow for extra uses of spells, items, etc.  
 - "Lockpick" / "Lock Pick" items are a special case consumable item that will prompt in the chat if the Stealth roll is failed to see if the lockpick breaks. If the stealth roll fails again, then the lockpick will be consumed.  
 - Implemented a Boon marker on the Champion sheet.  
+
+## v 0.1.2
+- Bug fixes.  
+- Implemented ability to create items on Champion cards.  
+- Made a bonus field for health, to manually increase health for things like Kin bonuses.  
+- Added compendium ability.  
