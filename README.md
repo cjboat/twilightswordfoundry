@@ -26,4 +26,6 @@ A Foundry v13 system for Twilight Sword by Two Little Mice
 ## v 0.1.3
 - Bug fixes.  
 - Implemented heart / stamina stone usage. Using these will increase your hearts / stamina by 1 permanently, then be consumed.   
-- 
+- Updated NPC sheets to be more like Champion sheets, but more streamlined and lightweight.  
+- Added the ability to click on Hearts and Stamina points to add / subtract.  
+- Added the ability to tab through the stats on Champion, Monster, and NPC sheets.
