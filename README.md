@@ -42,3 +42,8 @@ A Foundry v13 system for Twilight Sword by Two Little Mice
 	- Certain abilities like "Savage" lower the chance of being hit.
 	- Others will be added over time.
 - Added "Twlight" elemental type - it is Strong to every other element, and every other element is weak to it.
+
+# 2026-05-11
+## v 0.1.5
+- Bug fixes.  
+- Allows for monster actions to be moved up/down.  

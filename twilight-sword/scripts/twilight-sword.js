@@ -3146,6 +3146,44 @@ async function noteMonsterActionUsed(actor, actionIndex) {
   });
 }
 
+function getSwappedMonsterActionIndex(index, fromIndex, toIndex) {
+  if (index === null || index === undefined || Number.isNaN(Number(index))) return index;
+
+  const numericIndex = Number(index);
+  if (numericIndex === fromIndex) return toIndex;
+  if (numericIndex === toIndex) return fromIndex;
+
+  return numericIndex;
+}
+
+async function preserveMonsterRotationAfterActionMove(actor, fromIndex, toIndex) {
+  if (!game.combat) return;
+
+  const state = getMonsterRotationState(actor);
+  await setMonsterRotationState(actor, {
+    ...state,
+    lastIndex: getSwappedMonsterActionIndex(state.lastIndex, fromIndex, toIndex),
+    nextIndex: getSwappedMonsterActionIndex(state.nextIndex, fromIndex, toIndex)
+  });
+}
+
+async function moveMonsterAction(actor, index, direction) {
+  const actions = foundry.utils.deepClone(actor.system.actions || []);
+  const fromIndex = Number(index);
+  const toIndex = fromIndex + Number(direction);
+
+  if (!Number.isInteger(fromIndex) || !Number.isInteger(toIndex)) return;
+  if (toIndex < 0 || toIndex >= actions.length) {
+    ui.notifications.info("That monster action is already at the edge of the list.");
+    return;
+  }
+
+  [actions[fromIndex], actions[toIndex]] = [actions[toIndex], actions[fromIndex]];
+
+  await actor.update({ "system.actions": actions });
+  await preserveMonsterRotationAfterActionMove(actor, fromIndex, toIndex);
+}
+
 async function startMonsterRotation(actor) {
   if (!game.combat) {
     ui.notifications.warn("Start combat before using monster rotation.");
@@ -5549,6 +5587,24 @@ class TwilightSwordMonsterSheet extends ActorSheet {
       const index = Number(card.dataset.actionIndex);
       html.find(".monster-action-menu-wrap").removeClass("open");
       await editMonsterAction(this.actor, index);
+    });
+
+    html.find(".monster-action-move-up").click(async event => {
+      event.preventDefault();
+      const card = event.currentTarget.closest(".monster-action-card");
+      const index = Number(card.dataset.actionIndex);
+      html.find(".monster-action-menu-wrap").removeClass("open");
+      await moveMonsterAction(this.actor, index, -1);
+      this.render(false);
+    });
+
+    html.find(".monster-action-move-down").click(async event => {
+      event.preventDefault();
+      const card = event.currentTarget.closest(".monster-action-card");
+      const index = Number(card.dataset.actionIndex);
+      html.find(".monster-action-menu-wrap").removeClass("open");
+      await moveMonsterAction(this.actor, index, 1);
+      this.render(false);
     });
 
     html.find(".monster-action-delete").click(async event => {
