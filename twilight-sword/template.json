@@ -42,7 +42,8 @@
           "fear": false,
           "freeze": false,
           "blind": false,
-          "silence": false
+          "silence": false,
+          "prone": false
         }
       }
     },
@@ -66,8 +67,6 @@
     "monster": {
     "templates": ["base", "creature"],
     "level": 1,
-    "damage": "1d6",
-    "damageType": "non-magical",
     "elementalAffinity": "none",
     "variant": {
       "rank": "none",

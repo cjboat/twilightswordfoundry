@@ -7,38 +7,11 @@
 
       <div class="grid grid-3">
         <label>Base Threat <input name="system.level" type="number" value="{{system.level}}" /></label>
-        <label>Default Damage <input name="system.damage" type="text" value="{{system.damage}}" /></label>
-        <label>
-          Type
-          <select name="system.damageType">
-            {{#select damageType}}
-              <option value="non-magical">Non-magical</option>
-              <option value="fire">Fire</option>
-              <option value="ice">Ice</option>
-              <option value="wind">Wind</option>
-              <option value="earth">Earth</option>
-              <option value="thunder">Thunder</option>
-              <option value="water">Water</option>
-              <option value="light">Light</option>
-              <option value="darkness">Darkness</option>
-            {{/select}}
-          </select>
-        </label>
         <label>Base Armor <input name="system.armor.value" type="number" value="{{system.armor.value}}" /></label>
         <label>
           Base Elemental Affinity
           <select name="system.elementalAffinity">
-            {{#select elementalAffinity}}
-              <option value="none">None</option>
-              <option value="fire">Fire</option>
-              <option value="ice">Ice</option>
-              <option value="wind">Wind</option>
-              <option value="earth">Earth</option>
-              <option value="thunder">Thunder</option>
-              <option value="water">Water</option>
-              <option value="light">Light</option>
-              <option value="darkness">Darkness</option>
-            {{/select}}
+            {{{tsElementalAffinityOptions elementalAffinity}}}
           </select>
         </label>
         <label>
@@ -55,17 +28,7 @@
         <label>
           Elemental Variant
           <select name="system.variant.elementalType">
-            {{#select monsterVariant.elementalType}}
-              <option value="none">None</option>
-              <option value="fire">Fire</option>
-              <option value="ice">Ice</option>
-              <option value="wind">Wind</option>
-              <option value="earth">Earth</option>
-              <option value="thunder">Thunder</option>
-              <option value="water">Water</option>
-              <option value="light">Light</option>
-              <option value="darkness">Darkness</option>
-            {{/select}}
+            {{{tsElementalAffinityOptions monsterVariant.elementalType}}}
           </select>
         </label>
       </div>
@@ -141,8 +104,10 @@
 
                 <div class="monster-action-meta">
                   {{#if action.roll}}<span>Roll: {{action.roll}}</span>{{/if}}
+                  {{#if action.range}}<span>Range: {{tsRangeLabel action.range}}</span>{{/if}}
                   {{#if action.damage}}<span>Damage: {{action.damage}}</span>{{/if}}
                   {{#if action.damage}}<span>Type: {{tsDamageTypeLabel action.damageType}}</span>{{/if}}
+                  {{#if action.saveAbility}}<span>Save: {{tsAbilityLabel action.saveAbility}}{{#if action.saveTarget}} {{action.saveTarget}}{{/if}}</span>{{/if}}
                   {{#if action.special}}<span>Special: {{action.staminaCost}} STA</span>{{/if}}
                   {{#if (tsHasMonsterActionColor action.actionColor)}}<span>{{tsMonsterActionColorLabel action.actionColor}}</span>{{/if}}
                   {{#if action.ignoreArmor}}<span>Ignores Armor</span>{{/if}}
@@ -190,6 +155,36 @@
       <section class="zelda-panel">
         <h2>Effective Elemental Affinity</h2>
         <p>{{tsElementalAffinityLabel effectiveElementalAffinity}}</p>
+      </section>
+
+      <section class="zelda-panel monster-feats">
+        <div class="section-heading">
+          <h2>Monster Abilities</h2>
+          <button type="button" class="create-monster-feat">+ Add Ability</button>
+        </div>
+
+        <ol class="items-list">
+          {{#each feats as |item|}}
+            <li
+              class="item zelda-item feat-row"
+              data-item-id="{{item.id}}"
+              title="{{tsItemTooltip item}}"
+            >
+              <img src="{{item.img}}" width="32" height="32" />
+
+              <strong>{{item.name}}</strong>
+
+              <button type="button" class="feat-chat" data-item-id="{{item.id}}">
+                Chat
+              </button>
+
+              <div class="item-controls">
+                <button type="button" class="item-edit" data-item-id="{{item.id}}">&#9776;</button>
+                <button type="button" class="item-delete" data-item-id="{{item.id}}">&#10005;</button>
+              </div>
+            </li>
+          {{/each}}
+        </ol>
       </section>
 
       <h2>Status Effects</h2>

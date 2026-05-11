@@ -1,145 +1,167 @@
 {
-  "id": "twilight-sword",
-  "title": "Twilight Sword",
-  "description": "A Foundry VTT v13 system for Twilight Sword by Two Little Mice.",
-  "version": "0.1.3",
-  "url": "https://github.com/cjboat/twilightswordfoundry",
-  "manifest": "https://raw.githubusercontent.com/cjboat/twilightswordfoundry/main/twilight-sword/system.json",
-  "download": "https://raw.githubusercontent.com/cjboat/twilightswordfoundry/main/system.zip",
-  "compatibility": {
-    "minimum": "13",
-    "verified": "13"
-  },
-  "authors": [
-    {
-      "name": "CJ Boat"
-    }
-  ],
-  "esmodules": [
-    "scripts/twilight-sword.js"
-  ],
-  "styles": [
-    "styles/twilight-sword.css"
-  ],
-  "languages": [
-    {
-      "lang": "en",
-      "name": "English",
-      "path": "lang/en.json"
-    }
-  ],
-  "documentTypes": {
-    "Actor": {
-      "champion": {},
-      "monster": {},
-      "npc": {}
-    },
-    "Item": {
-      "weapon": {},
-      "armor": {},
-      "feat": {},
-      "spell": {},
-      "consumable": {},
-      "gear": {},
-      "kin": {},
-      "way": {}
-    }
-  },
-  "packs": [
-    {
-      "name": "champions",
-      "label": "Twilight Sword Champions",
-      "type": "Actor",
-      "system": "twilight-sword",
-      "path": "packs/champions"
-    },
-    {
-      "name": "monsters",
-      "label": "Twilight Sword Monsters",
-      "type": "Actor",
-      "system": "twilight-sword",
-      "path": "packs/monsters"
-    },
-    {
-      "name": "npcs",
-      "label": "Twilight Sword NPCs",
-      "type": "Actor",
-      "system": "twilight-sword",
-      "path": "packs/npcs"
-    },
-    {
-      "name": "weapons",
-      "label": "Twilight Sword Weapons",
-      "type": "Item",
-      "system": "twilight-sword",
-      "path": "packs/weapons"
-    },
-    {
-      "name": "armor",
-      "label": "Twilight Sword Armor",
-      "type": "Item",
-      "system": "twilight-sword",
-      "path": "packs/armor"
-    },
-    {
-      "name": "gear",
-      "label": "Twilight Sword Gear",
-      "type": "Item",
-      "system": "twilight-sword",
-      "path": "packs/gear"
-    },
-    {
-      "name": "consumables",
-      "label": "Twilight Sword Consumables",
-      "type": "Item",
-      "system": "twilight-sword",
-      "path": "packs/consumables"
-    },
-    {
-      "name": "spells",
-      "label": "Twilight Sword Spells",
-      "type": "Item",
-      "system": "twilight-sword",
-      "path": "packs/spells"
-    },
-    {
-      "name": "feats",
-      "label": "Twilight Sword Feats",
-      "type": "Item",
-      "system": "twilight-sword",
-      "path": "packs/feats"
-    },
-    {
-      "name": "kin",
-      "label": "Twilight Sword Kin",
-      "type": "Item",
-      "system": "twilight-sword",
-      "path": "packs/kin"
-    },
-    {
-      "name": "ways",
-      "label": "Twilight Sword Ways",
-      "type": "Item",
-      "system": "twilight-sword",
-      "path": "packs/ways"
-    },
-    {
-      "name": "journals",
-      "label": "Twilight Sword Journals",
-      "type": "JournalEntry",
-      "path": "packs/journals"
-    },
-    {
-      "name": "tables",
-      "label": "Twilight Sword Roll Tables",
-      "type": "RollTable",
-      "path": "packs/tables"
-    },
-    {
-      "name": "macros",
-      "label": "Twilight Sword Macros",
-      "type": "Macro",
-      "path": "packs/macros"
-    }
-  ]
+    "id":  "twilight-sword",
+    "title":  "Twilight Sword",
+    "description":  "A Foundry VTT v13 system for Twilight Sword by Two Little Mice.",
+    "version":  "0.1.4",
+    "url":  "https://github.com/cjboat/twilightswordfoundry",
+    "manifest":  "https://raw.githubusercontent.com/cjboat/twilightswordfoundry/main/twilight-sword/system.json",
+    "download":  "https://raw.githubusercontent.com/cjboat/twilightswordfoundry/main/system.zip",
+    "compatibility":  {
+                          "minimum":  "13",
+                          "verified":  "13"
+                      },
+    "authors":  [
+                    {
+                        "name":  "CJ Boat"
+                    }
+                ],
+    "esmodules":  [
+                      "scripts/twilight-sword.js"
+                  ],
+    "styles":  [
+                   "styles/twilight-sword.css"
+               ],
+    "languages":  [
+                      {
+                          "lang":  "en",
+                          "name":  "English",
+                          "path":  "lang/en.json"
+                      }
+                  ],
+    "documentTypes":  {
+                          "Actor":  {
+                                        "champion":  {
+
+                                                     },
+                                        "monster":  {
+
+                                                    },
+                                        "npc":  {
+
+                                                }
+                                    },
+                          "Item":  {
+                                       "weapon":  {
+
+                                                  },
+                                       "armor":  {
+
+                                                 },
+                                       "feat":  {
+
+                                                },
+                                       "spell":  {
+
+                                                 },
+                                       "consumable":  {
+
+                                                      },
+                                       "gear":  {
+
+                                                },
+                                       "kin":  {
+
+                                               },
+                                       "way":  {
+
+                                               }
+                                   }
+                      },
+    "packs":  [
+                  {
+                      "name":  "champions",
+                      "label":  "Twilight Sword Champions",
+                      "type":  "Actor",
+                      "system":  "twilight-sword",
+                      "path":  "packs/champions"
+                  },
+                  {
+                      "name":  "monsters",
+                      "label":  "Twilight Sword Monsters",
+                      "type":  "Actor",
+                      "system":  "twilight-sword",
+                      "path":  "packs/monsters"
+                  },
+                  {
+                      "name":  "npcs",
+                      "label":  "Twilight Sword NPCs",
+                      "type":  "Actor",
+                      "system":  "twilight-sword",
+                      "path":  "packs/npcs"
+                  },
+                  {
+                      "name":  "weapons",
+                      "label":  "Twilight Sword Weapons",
+                      "type":  "Item",
+                      "system":  "twilight-sword",
+                      "path":  "packs/weapons"
+                  },
+                  {
+                      "name":  "armor",
+                      "label":  "Twilight Sword Armor",
+                      "type":  "Item",
+                      "system":  "twilight-sword",
+                      "path":  "packs/armor"
+                  },
+                  {
+                      "name":  "gear",
+                      "label":  "Twilight Sword Gear",
+                      "type":  "Item",
+                      "system":  "twilight-sword",
+                      "path":  "packs/gear"
+                  },
+                  {
+                      "name":  "consumables",
+                      "label":  "Twilight Sword Consumables",
+                      "type":  "Item",
+                      "system":  "twilight-sword",
+                      "path":  "packs/consumables"
+                  },
+                  {
+                      "name":  "spells",
+                      "label":  "Twilight Sword Spells",
+                      "type":  "Item",
+                      "system":  "twilight-sword",
+                      "path":  "packs/spells"
+                  },
+                  {
+                      "name":  "feats",
+                      "label":  "Twilight Sword Feats",
+                      "type":  "Item",
+                      "system":  "twilight-sword",
+                      "path":  "packs/feats"
+                  },
+                  {
+                      "name":  "kin",
+                      "label":  "Twilight Sword Kin",
+                      "type":  "Item",
+                      "system":  "twilight-sword",
+                      "path":  "packs/kin"
+                  },
+                  {
+                      "name":  "ways",
+                      "label":  "Twilight Sword Ways",
+                      "type":  "Item",
+                      "system":  "twilight-sword",
+                      "path":  "packs/ways"
+                  },
+                  {
+                      "name":  "journals",
+                      "label":  "Twilight Sword Journals",
+                      "type":  "JournalEntry",
+                      "path":  "packs/journals"
+                  },
+                  {
+                      "name":  "tables",
+                      "label":  "Twilight Sword Roll Tables",
+                      "type":  "RollTable",
+                      "path":  "packs/tables"
+                  },
+                  {
+                      "name":  "macros",
+                      "label":  "Twilight Sword Macros",
+                      "type":  "Macro",
+                      "path":  "packs/macros"
+                  }
+              ]
 }

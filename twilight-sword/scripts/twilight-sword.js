@@ -695,7 +695,8 @@ async function cleanupRestStatuses(actor) {
     "fear",
     "freeze",
     "blind",
-    "silence"
+    "silence",
+    "prone"
   ]);
 
   if (Number(actor.system.hearts?.value ?? 0) > 0) {
@@ -1005,6 +1006,17 @@ async function processStartOfTurnStatuses(actor) {
 
 // Rolls 
 
+const ABILITY_OPTIONS = [
+  { key: "str", label: "Strength" },
+  { key: "agl", label: "Agility" },
+  { key: "vit", label: "Vitality" },
+  { key: "per", label: "Perception" },
+  { key: "wil", label: "Will" },
+  { key: "kno", label: "Knowledge" },
+  { key: "cha", label: "Charisma" },
+  { key: "ste", label: "Stealth" }
+];
+
 function normalizeAbilityKey(value) {
   const key = String(value || "").trim().toLowerCase();
   const aliases = {
@@ -1019,6 +1031,25 @@ function normalizeAbilityKey(value) {
   };
 
   return aliases[key] || key;
+}
+
+function getAbilityLabel(abilityKey) {
+  const key = normalizeAbilityKey(abilityKey);
+
+  return ABILITY_OPTIONS.find(option => option.key === key)?.label || "";
+}
+
+function buildAbilityOptions(selectedAbility = "", { includeBlank = true } = {}) {
+  const selected = normalizeAbilityKey(selectedAbility);
+  const options = includeBlank ? ['<option value="">None</option>'] : [];
+
+  for (const ability of ABILITY_OPTIONS) {
+    options.push(
+      `<option value="${ability.key}" ${ability.key === selected ? "selected" : ""}>${ability.label}</option>`
+    );
+  }
+
+  return options.join("");
 }
 
 async function rollAbility(actor, abilityKey, options = {}) {
@@ -1036,8 +1067,9 @@ async function rollAbility(actor, abilityKey, options = {}) {
       speaker: ChatMessage.getSpeaker({ actor }),
       content: `
         <div class="ts-chat-card">
-          <h2>${ability.label} Roll</h2>
+          <h2>${escapeHtml(options.title || `${ability.label} Roll`)}</h2>
           <p><strong>${actor.name}</strong> is K.O. and automatically fails.</p>
+          ${options.sourceName ? `<p><strong>Source:</strong> ${escapeHtml(options.sourceName)}</p>` : ""}
         </div>
       `
     });
@@ -1070,7 +1102,10 @@ async function rollAbility(actor, abilityKey, options = {}) {
   const roll = await new Roll(formula).evaluate();
   const rawTotal = roll.total;
   const total = Math.max(rawTotal - rollBonus, 1);
-  const target = Number(ability.value);
+  const hasTargetOverride = options.target !== undefined && options.target !== null && String(options.target).trim() !== "";
+  const target = hasTargetOverride && Number.isFinite(Number(options.target))
+    ? Number(options.target)
+    : Number(ability.value);
   const success = total <= target;
 
   let result = success ? "Success" : "Failure";
@@ -1081,7 +1116,8 @@ async function rollAbility(actor, abilityKey, options = {}) {
     speaker: ChatMessage.getSpeaker({ actor }),
     flavor: `
       <div class="ts-chat-card">
-        <h2>${ability.label} Roll</h2>
+        <h2>${escapeHtml(options.title || `${ability.label} Roll`)}</h2>
+        ${options.sourceName ? `<p><strong>Source:</strong> ${escapeHtml(options.sourceName)}</p>` : ""}
         <p><strong>Roll:</strong> ${rawTotal}${rollBonus ? ` - ${rollBonus} ${rollBonusReason} = ${total}` : ""} vs ${target}</p>
         <p><strong>Result:</strong> ${result}</p>
         ${staminaSpent ? "<p>Spent 1 Stamina for Advantage.</p>" : ""}
@@ -1338,6 +1374,174 @@ async function rollWeaponAttack(actor, weapon, options = {}) {
   }
 }
 
+function getMonsterReactionOptions(actor) {
+  const reactions = {
+    dodge: null,
+    parry: null
+  };
+
+  if (actor?.type !== "monster") return reactions;
+
+  if (getMonsterVariantData(actor).rank === "black") {
+    reactions.dodge = { type: "dodge", target: 8, source: "Black Variant" };
+    reactions.parry = { type: "parry", target: 8, source: "Black Variant" };
+  }
+
+  for (const item of getMonsterAbilityItems(actor)) {
+    const text = getMonsterAbilityText(item);
+    const regex = /\b(dodge|parry)\s*\[\s*(\d+)\s*\]/gi;
+    let match;
+
+    while ((match = regex.exec(text)) !== null) {
+      const type = match[1].toLowerCase();
+      const target = Math.max(Math.floor(Number(match[2]) || 0), 1);
+
+      if (!reactions[type] || target > reactions[type].target) {
+        reactions[type] = {
+          type,
+          target,
+          source: item.name
+        };
+      }
+    }
+  }
+
+  return reactions;
+}
+
+function getMonsterAbilityItems(actor) {
+  if (actor?.type !== "monster") return [];
+
+  return actor.items.filter(item => item.type === "feat");
+}
+
+function getMonsterAbilityText(item) {
+  return [
+    item.name,
+    stripHtml(item.system?.description || ""),
+    stripHtml(item.system?.effect || "")
+  ].filter(Boolean).join(" ");
+}
+
+function findMonsterAbility(actor, regex) {
+  for (const item of getMonsterAbilityItems(actor)) {
+    if (!regex.test(getMonsterAbilityText(item))) continue;
+
+    return item;
+  }
+
+  return null;
+}
+
+function getMonsterQuickDodgePenalty(actor) {
+  const ability = findMonsterAbility(actor, /\bquick\b/i);
+  if (!ability) return null;
+
+  return {
+    modifier: -1,
+    source: ability.name
+  };
+}
+
+function getMonsterSavageReactionPenalty(actor) {
+  const ability = findMonsterAbility(actor, /\bsavage\b/i);
+  if (!ability) return null;
+
+  return {
+    modifier: -1,
+    source: ability.name
+  };
+}
+
+function getMonsterJuggernautParryDisadvantage(actor) {
+  const ability = findMonsterAbility(actor, /\bjuggernaut\b/i);
+  if (!ability) return null;
+
+  return {
+    source: ability.name
+  };
+}
+
+function getMonsterPlantElementalTrait(actor) {
+  const ability = findMonsterAbility(actor, /\bplants?\b/i);
+  if (!ability) return null;
+
+  return {
+    source: ability.name,
+    resistant: "light",
+    weak: "fire"
+  };
+}
+
+function getMonsterRegenerationAbility(actor) {
+  const ability = findMonsterAbility(actor, /\b(?:regeneration|regneration|regenerate|regenerates|regenerating|no\s+pain)\b/i);
+  if (!ability) return null;
+
+  return {
+    amount: 1,
+    source: ability.name
+  };
+}
+
+async function processMonsterStartOfTurnAbilities(actor, combat, combatant) {
+  if (actor?.type !== "monster") return;
+
+  const threatTurn = Number(combatant?.getFlag("twilight-sword", "threatTurn") || 1);
+  if (threatTurn !== 1) return;
+
+  await processMonsterRegeneration(actor, combat);
+}
+
+async function processMonsterRegeneration(actor, combat) {
+  const regeneration = getMonsterRegenerationAbility(actor);
+  if (!regeneration) return;
+
+  const round = Number(combat?.round || 0);
+  const combatId = combat?.id || "no-combat";
+  const turnKey = `${combatId}:${round}`;
+
+  if (actor.getFlag("twilight-sword", "regenerationTurnKey") === turnKey) return;
+
+  await actor.setFlag("twilight-sword", "regenerationTurnKey", turnKey);
+
+  const current = Number(actor.system.hearts?.value ?? 0);
+  const max = getMonsterEffectiveMaxHearts(actor);
+  const healed = Math.max(Math.min(regeneration.amount, max - current), 0);
+
+  if (healed > 0) {
+    await actor.update({
+      "system.hearts.value": current + healed
+    });
+  }
+
+  await ChatMessage.create({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `
+      <div class="ts-chat-card">
+        <h2>${escapeHtml(actor.name)} Regeneration</h2>
+        <p><strong>${escapeHtml(regeneration.source)}:</strong> At the beginning of its turn, ${escapeHtml(actor.name)} recovers ${regeneration.amount} Heart.</p>
+        <p><strong>Result:</strong> ${healed > 0 ? `Recovered ${healed} Heart (${current + healed}/${max}).` : `Already at full Hearts (${current}/${max}).`}</p>
+      </div>
+    `
+  });
+}
+
+function getMonsterReactionOption(actor, type) {
+  const reactionType = String(type || "").toLowerCase();
+
+  return getMonsterReactionOptions(actor)[reactionType] || null;
+}
+
+function canMonsterUseVariantReaction(actor) {
+  const reactions = getMonsterReactionOptions(actor);
+
+  return Boolean(reactions.dodge || reactions.parry);
+}
+
+function canMonsterUseReactionType(actor, type) {
+  return Boolean(getMonsterReactionOption(actor, type));
+}
+
 function canActorUseDefenseReaction(actor) {
   return actor?.type === "champion" || canMonsterUseVariantReaction(actor);
 }
@@ -1363,6 +1567,12 @@ function buildReactionButtons({
   restrictionText = ""
 } = {}) {
   if (!shouldOfferReactionButtons(attacker, defender)) return "";
+
+  if (defender?.type === "monster") {
+    allowDodge = allowDodge && canMonsterUseReactionType(defender, "dodge");
+    allowParry = allowParry && canMonsterUseReactionType(defender, "parry");
+  }
+
   if (!allowDodge && !allowParry) {
     return restrictionText ? `<p><strong>Reactions:</strong> ${escapeHtml(restrictionText)}</p>` : "";
   }
@@ -1479,16 +1689,6 @@ async function setReactionUsed(actor, value) {
 }
 
 async function rollMonsterVariantReaction(actor, type) {
-  if (!canMonsterUseVariantReaction(actor)) {
-    ui.notifications.warn(`${actor.name} cannot dodge or parry.`);
-    return;
-  }
-
-  if (hasReactionUsed(actor)) {
-    ui.notifications.warn(`${actor.name} has already used their variant reaction this round.`);
-    return;
-  }
-
   const reactionType = String(type || "").toLowerCase();
 
   if (!["dodge", "parry"].includes(reactionType)) {
@@ -1496,8 +1696,20 @@ async function rollMonsterVariantReaction(actor, type) {
     return;
   }
 
+  const reaction = getMonsterReactionOption(actor, reactionType);
+
+  if (!reaction) {
+    ui.notifications.warn(`${actor.name} cannot ${reactionType}.`);
+    return;
+  }
+
+  if (hasReactionUsed(actor)) {
+    ui.notifications.warn(`${actor.name} has already used their monster reaction this round.`);
+    return;
+  }
+
   const roll = await new Roll("1d12").evaluate();
-  const success = roll.total <= 8;
+  const success = roll.total <= reaction.target;
 
   await setReactionUsed(actor, true);
 
@@ -1506,14 +1718,14 @@ async function rollMonsterVariantReaction(actor, type) {
     flavor: `
       <div class="ts-chat-card">
         <h2>${actor.name} attempts to ${reactionType === "dodge" ? "Dodge" : "Parry"}</h2>
-        <p><strong>Black Variant:</strong> Dodge/Parry [8] once per round.</p>
-        <p><strong>Roll:</strong> ${roll.total} vs 8</p>
+        <p><strong>${escapeHtml(reaction.source)}:</strong> ${reactionType === "dodge" ? "Dodge" : "Parry"} [${reaction.target}] once per round.</p>
+        <p><strong>Roll:</strong> ${roll.total} vs ${reaction.target}</p>
         <p><strong>Result:</strong> ${success ? "Avoids the attack" : "Fails"}</p>
       </div>
     `
   });
 
-  return { success, total: roll.total, target: 8, type: reactionType };
+  return { success, total: roll.total, target: reaction.target, type: reactionType };
 }
 
 async function rollReaction(actor, type, options = {}) {
@@ -1542,10 +1754,30 @@ async function rollReaction(actor, type, options = {}) {
   let bonus = 0;
   let formula = "1d12";
   let reason = "";
+  const rollAdjustments = [];
+  let quickPenalty = null;
+  let savagePenalty = null;
+  let juggernautDisadvantage = null;
 
   if (reactionType === "dodge") {
     abilityKey = "agl";
     reason = "Dodge";
+    quickPenalty = getMonsterQuickDodgePenalty(options.attacker);
+    savagePenalty = getMonsterSavageReactionPenalty(options.attacker);
+
+    if (quickPenalty) {
+      rollAdjustments.push({
+        label: `Quick (${quickPenalty.source})`,
+        value: quickPenalty.modifier
+      });
+    }
+
+    if (savagePenalty) {
+      rollAdjustments.push({
+        label: `Savage (${savagePenalty.source})`,
+        value: savagePenalty.modifier
+      });
+    }
   } else if (reactionType === "parry") {
     abilityKey = "str";
     parryItem = getBestParryItem(actor, { rangedAttack });
@@ -1562,6 +1794,22 @@ async function rollReaction(actor, type, options = {}) {
     const feats = getWeaponFeats(parryItem);
     bonus = feats.has("defensive") ? 1 : 0;
     reason = `Parry with ${parryItem.name}`;
+    savagePenalty = getMonsterSavageReactionPenalty(options.attacker);
+    juggernautDisadvantage = getMonsterJuggernautParryDisadvantage(options.attacker);
+
+    if (bonus) {
+      rollAdjustments.push({
+        label: "Defensive",
+        value: bonus
+      });
+    }
+
+    if (savagePenalty) {
+      rollAdjustments.push({
+        label: `Savage (${savagePenalty.source})`,
+        value: savagePenalty.modifier
+      });
+    }
   } else {
     ui.notifications.warn("Unknown reaction type.");
     return;
@@ -1574,7 +1822,11 @@ async function rollReaction(actor, type, options = {}) {
     return;
   }
 
-  const disadvantageReason = getDisadvantageReason(actor, abilityKey, {});
+  const disadvantageReasons = [
+    getDisadvantageReason(actor, abilityKey, {}),
+    juggernautDisadvantage ? `Juggernaut (${juggernautDisadvantage.source})` : ""
+  ].filter(Boolean);
+  const disadvantageReason = disadvantageReasons.join(", ");
   const advantage = hasDefensiveStance(actor);
 
   if (disadvantageReason && advantage) {
@@ -1586,7 +1838,14 @@ async function rollReaction(actor, type, options = {}) {
   }
 
   const roll = await new Roll(formula).evaluate();
-  const adjustedTotal = Math.max(roll.total - bonus, 1);
+  const rollAdjustmentTotal = rollAdjustments.reduce((total, adjustment) => total + adjustment.value, 0);
+  const adjustedTotal = Math.max(roll.total - rollAdjustmentTotal, 1);
+  const rollAdjustmentText = rollAdjustments
+    .map(adjustment => {
+      const sign = adjustment.value > 0 ? "-" : "+";
+      return ` ${sign} ${Math.abs(adjustment.value)} ${escapeHtml(adjustment.label)}`;
+    })
+    .join("");
   const target = Number(ability.value);
   const success = adjustedTotal <= target;
   const reactionLimit = getReactionLimit(actor);
@@ -1601,8 +1860,11 @@ async function rollReaction(actor, type, options = {}) {
       <div class="ts-chat-card">
         <h2>${actor.name} attempts to ${reactionType === "dodge" ? "Dodge" : "Parry"}</h2>
         <p><strong>${reason}</strong></p>
-        <p><strong>Roll:</strong> ${roll.total}${bonus ? ` - ${bonus} Defensive = ${adjustedTotal}` : ""} vs ${ability.label} ${target}</p>
+        <p><strong>Roll:</strong> ${roll.total}${rollAdjustmentText ? `${rollAdjustmentText} = ${adjustedTotal}` : ""} vs ${ability.label} ${target}</p>
         <p><strong>Result:</strong> ${success ? "Avoids the attack" : "Fails"}</p>
+        ${quickPenalty ? `<p><strong>Quick:</strong> -1 to Dodge rolls against attacks from ${escapeHtml(options.attacker?.name || "this monster")}.</p>` : ""}
+        ${savagePenalty ? `<p><strong>Savage:</strong> -1 to Dodge and Parry rolls against attacks from ${escapeHtml(options.attacker?.name || "this monster")}.</p>` : ""}
+        ${juggernautDisadvantage ? `<p><strong>Juggernaut:</strong> Parry rolls against attacks from ${escapeHtml(options.attacker?.name || "this monster")} have Disadvantage.</p>` : ""}
         ${dancerReaction ? `<p><strong>Dancer:</strong> May use up to ${reactionLimit} reactions this round while wearing Clothing.</p>` : ""}
         ${advantage ? "<p>Used Defensive Stance for Advantage.</p>" : ""}
         ${disadvantageReason ? `<p>Disadvantage from ${disadvantageReason}${advantage ? " was cancelled by Advantage." : "."}</p>` : ""}
@@ -1718,21 +1980,33 @@ async function rollInitiativeForActor(actor) {
   const rawBaseModifier = Number(actor.system.initiative?.modifier ?? actor.system.initiative ?? 0);
   const baseModifier = Number.isFinite(rawBaseModifier) ? rawBaseModifier : 0;
   const tempoModifier = actorHasFeatNamed(actor, "tempo") ? -1 : 0;
-  const modifier = baseModifier + tempoModifier;
+  const swiftModifier = actor.type === "monster" && actorHasFeatNamed(actor, "swift") ? -1 : 0;
+  const modifier = baseModifier + tempoModifier + swiftModifier;
   const combatants = await syncThreatCombatants(combat, actor, token);
   const rolls = [];
+  const initiativeTotals = [];
 
   for (let index = 0; index < combatants.length; index += 1) {
     const combatant = combatants[index];
-    const roll = await new Roll(`1d12 ${modifier < 0 ? "-" : "+"} ${Math.abs(modifier)}`).evaluate();
-    rolls.push(roll);
+    const roll = await new Roll("1d12").evaluate();
+    const total = Math.max(roll.total + modifier, 1);
 
-    await combat.setInitiative(combatant.id, -roll.total);
+    rolls.push(roll);
+    initiativeTotals.push(total);
+
+    await combat.setInitiative(combatant.id, -total);
   }
 
-  const rollLines = rolls.map((roll, index) =>
-    `<p><strong>${actor.type === "monster" ? `Turn ${index + 1}` : "Twilight Sword Initiative"}:</strong> ${roll.total}</p>`
-  ).join("");
+  const modifierText = modifier
+    ? `${modifier < 0 ? " - " : " + "}${Math.abs(modifier)} = `
+    : "";
+  const rollLines = rolls.map((roll, index) => {
+    const total = initiativeTotals[index];
+
+    return `<p><strong>${actor.type === "monster" ? `Turn ${index + 1}` : "Twilight Sword Initiative"}:</strong> ${
+      modifier ? `${roll.total}${modifierText}${total}` : total
+    }</p>`;
+  }).join("");
 
   await ChatMessage.create({
     speaker: ChatMessage.getSpeaker({ actor, token: token.document }),
@@ -1742,6 +2016,7 @@ async function rollInitiativeForActor(actor) {
         <h2>${actor.name} rolls Initiative</h2>
         ${actor.type === "monster" ? `<p><strong>Threat:</strong> ${combatants.length}</p>` : ""}
         ${tempoModifier ? `<p><strong>Tempo:</strong> -1 to initiative rolls.</p>` : ""}
+        ${swiftModifier ? `<p><strong>Swift:</strong> -1 to initiative rolls, minimum 1.</p>` : ""}
         ${rollLines}
         <p><em>Lower goes first.</em></p>
       </div>
@@ -2285,7 +2560,7 @@ function canChooseFeatMultipleTimes(feat) {
 }
 
 async function addFeatToActor(actor, feat) {
-  if (actor.type !== "npc" && !actorHasWay(actor, feat.system?.way)) {
+  if (actor.type === "champion" && !actorHasWay(actor, feat.system?.way)) {
     ui.notifications.warn(`${actor.name} must have the ${feat.system?.way || "listed"} Way to take ${feat.name}.`);
     return false;
   }
@@ -2307,12 +2582,30 @@ async function addFeatToActor(actor, feat) {
   delete data._id;
   delete data.id;
 
-  if (actor.type === "npc") {
+  if (["monster", "npc"].includes(actor.type)) {
     foundry.utils.setProperty(data, "system.way", "");
   }
 
   await actor.createEmbeddedDocuments("Item", [data]);
   return true;
+}
+
+async function createOwnedFeat(actor, name = "New Monster Ability") {
+  if (!actor) return null;
+
+  const created = await actor.createEmbeddedDocuments("Item", [{
+    name,
+    type: "feat",
+    system: {
+      way: "",
+      description: "",
+      effect: ""
+    }
+  }]);
+  const feat = created[0];
+
+  feat?.sheet?.render(true);
+  return feat;
 }
 
 async function applyWayToActor(actor, wayItem, slot = null) {
@@ -2549,6 +2842,42 @@ function getAbilityRollBonuses(actor, abilityKey, options = {}) {
   return bonuses;
 }
 
+const ELEMENTAL_DAMAGE_TYPES = [
+  { value: "fire", label: "Fire" },
+  { value: "ice", label: "Ice" },
+  { value: "wind", label: "Wind" },
+  { value: "earth", label: "Earth" },
+  { value: "thunder", label: "Thunder" },
+  { value: "water", label: "Water" },
+  { value: "light", label: "Light" },
+  { value: "darkness", label: "Darkness" },
+  { value: "twilight", label: "Twilight" }
+];
+
+function buildSelectOptions(options, selectedValue) {
+  return options.map(option => `
+    <option value="${option.value}" ${option.value === selectedValue ? "selected" : ""}>${option.label}</option>
+  `).join("");
+}
+
+function buildDamageTypeOptions(selectedType = "") {
+  const selected = normalizeDamageType(selectedType);
+
+  return buildSelectOptions([
+    { value: "non-magical", label: "Non-magical" },
+    ...ELEMENTAL_DAMAGE_TYPES
+  ], selected);
+}
+
+function buildElementalAffinityOptions(selectedAffinity = "") {
+  const selected = normalizeElementalAffinity(selectedAffinity);
+
+  return buildSelectOptions([
+    { value: "none", label: "None" },
+    ...ELEMENTAL_DAMAGE_TYPES
+  ], selected);
+}
+
 function normalizeDamageType(value) {
   const damageType = String(value || "").trim().toLowerCase();
 
@@ -2556,6 +2885,7 @@ function normalizeDamageType(value) {
     return "non-magical";
   }
 
+  if (damageType.includes("twilight")) return "twilight";
   if (damageType.includes("dark")) return "darkness";
   if (damageType.includes("thunder") || damageType.includes("lightning")) return "thunder";
   if (damageType.includes("fire") || damageType.includes("flame")) return "fire";
@@ -2580,6 +2910,7 @@ function getDamageTypeLabel(type) {
   if (normalized === "water") return "Water";
   if (normalized === "light") return "Light";
   if (normalized === "darkness") return "Darkness";
+  if (normalized === "twilight") return "Twilight";
 
   return normalized ? normalized.charAt(0).toUpperCase() + normalized.slice(1) : "";
 }
@@ -2644,16 +2975,22 @@ function getMonsterEffectiveThreat(actor) {
   return rank === "black" ? baseThreat + 1 : baseThreat;
 }
 
-function getMonsterEffectiveMaxHearts(actor) {
-  const baseMax = getMonsterBaseMaxHearts(actor);
-  const baseThreat = getMonsterBaseThreat(actor);
-  const { rank } = getMonsterVariantData(actor);
+function getMonsterEffectiveMaxHeartsFromValues(baseMax, baseThreat, rank) {
+  rank = normalizeMonsterVariantRank(rank);
 
   if (rank === "black") return baseMax * 2;
   if (rank === "red") return baseMax + (5 * baseThreat);
   if (rank === "blue") return baseMax + (3 * baseThreat);
 
   return baseMax;
+}
+
+function getMonsterEffectiveMaxHearts(actor) {
+  const baseMax = getMonsterBaseMaxHearts(actor);
+  const baseThreat = getMonsterBaseThreat(actor);
+  const { rank } = getMonsterVariantData(actor);
+
+  return getMonsterEffectiveMaxHeartsFromValues(baseMax, baseThreat, rank);
 }
 
 function getMonsterEffectiveArmor(actor) {
@@ -2699,10 +3036,6 @@ function getMonsterVariantLabel(rank) {
   return "None";
 }
 
-function canMonsterUseVariantReaction(actor) {
-  return actor?.type === "monster" && getMonsterVariantData(actor).rank === "black";
-}
-
 function getMonsterVariantSummary(actor) {
   const data = getMonsterVariantData(actor);
   const baseThreat = getMonsterBaseThreat(actor);
@@ -2723,7 +3056,7 @@ function getMonsterVariantSummary(actor) {
   if (effectiveArmor !== baseArmor) traits.push(`Armor ${baseArmor} -> ${effectiveArmor}`);
   if (effectiveThreat !== baseThreat) traits.push(`Threat ${baseThreat} -> ${effectiveThreat}`);
   if (effectiveHeartsMax !== baseHeartsMax) traits.push(`Hearts ${baseHeartsMax} -> ${effectiveHeartsMax}`);
-  if (canMonsterUseVariantReaction(actor)) traits.push("Can dodge/parry [8] once per round");
+  if (data.rank === "black") traits.push("Can dodge/parry [8] once per round");
 
   return {
     ...data,
@@ -2935,6 +3268,15 @@ function getElementalAffinityProfile(actor) {
     };
   }
 
+  if (affinity === "twilight") {
+    return {
+      affinity,
+      immune: "",
+      resistant: "",
+      weak: "twilight"
+    };
+  }
+
   const wheel = ["fire", "ice", "wind", "earth", "thunder", "water"];
   const index = wheel.indexOf(affinity);
 
@@ -2963,9 +3305,41 @@ function getElementalAffinityDamageAdjustment(actor, damage, { damageType = "" }
     return { damage: startingDamage, text: "", multiplier: 1 };
   }
 
+  const damageLabel = getDamageTypeLabel(normalizedType);
+  const plantTrait = getMonsterPlantElementalTrait(actor);
+
+  if (plantTrait && normalizedType === plantTrait.resistant) {
+    const adjusted = Math.ceil(startingDamage / 2);
+
+    return {
+      damage: adjusted,
+      multiplier: 0.5,
+      text: `${actor.name}'s ${escapeHtml(plantTrait.source)} ability resists ${damageLabel} damage: ${startingDamage} -> ${adjusted}.`
+    };
+  }
+
+  if (plantTrait && normalizedType === plantTrait.weak) {
+    const adjusted = startingDamage * 2;
+
+    return {
+      damage: adjusted,
+      multiplier: 2,
+      text: `${actor.name}'s ${escapeHtml(plantTrait.source)} ability is weak to ${damageLabel} damage: ${startingDamage} -> ${adjusted}.`
+    };
+  }
+
   const profile = getElementalAffinityProfile(actor);
   const affinityLabel = getElementalAffinityLabel(profile.affinity);
-  const damageLabel = getDamageTypeLabel(normalizedType);
+
+  if (normalizedType === "twilight" && profile.affinity !== "none") {
+    const adjusted = startingDamage * 2;
+
+    return {
+      damage: adjusted,
+      multiplier: 2,
+      text: `${actor.name}'s ${affinityLabel} affinity is weak to ${damageLabel} damage: ${startingDamage} -> ${adjusted}.`
+    };
+  }
 
   if (normalizedType === profile.immune) {
     return {
@@ -3198,6 +3572,35 @@ function getRangeBandFromSquares(squares) {
 
 function normalizeRange(range) {
   return String(range || "").trim().toLowerCase();
+}
+
+function getRangeLabel(range) {
+  range = normalizeRange(range);
+
+  if (range === "self") return "Self";
+  if (range === "close") return "Close";
+  if (range === "near") return "Near";
+  if (range === "far") return "Far";
+
+  return "";
+}
+
+function buildRangeOptions(selectedRange = "", { includeBlank = true } = {}) {
+  const selected = normalizeRange(selectedRange);
+  const options = includeBlank ? ['<option value="">Not set</option>'] : [];
+
+  for (const [value, label] of [
+    ["close", "Close"],
+    ["near", "Near"],
+    ["far", "Far"],
+    ["self", "Self"]
+  ]) {
+    options.push(
+      `<option value="${value}" ${value === selected ? "selected" : ""}>${label}</option>`
+    );
+  }
+
+  return options.join("");
 }
 
 function getRangeLimit(range) {
@@ -4162,6 +4565,12 @@ function getMonsterActionReactionRules(action = {}) {
 
 function normalizeMonsterAction(action = {}) {
   const special = action.special === true || action.special === "true";
+  const range = getRangeLabel(action.range) ? normalizeRange(action.range) : "";
+  const saveAbility = getAbilityLabel(action.saveAbility) ? normalizeAbilityKey(action.saveAbility) : "";
+  const rawSaveTarget = String(action.saveTarget ?? "").trim();
+  const saveTarget = rawSaveTarget && Number.isFinite(Number(rawSaveTarget))
+    ? Math.max(Math.floor(Number(rawSaveTarget)), 1)
+    : "";
   const rawStaminaCost = Number(action.staminaCost ?? 1);
   const staminaCost = special
     ? Math.max(Number.isFinite(rawStaminaCost) ? rawStaminaCost : 1, 1)
@@ -4170,8 +4579,11 @@ function normalizeMonsterAction(action = {}) {
   return {
     name: action.name || "",
     roll: action.roll || "",
+    range,
     damage: action.damage || "",
     damageType: normalizeDamageType(action.damageType),
+    saveAbility,
+    saveTarget,
     actionColor: normalizeMonsterActionColor(action.actionColor || action.color),
     special,
     staminaCost,
@@ -4179,9 +4591,36 @@ function normalizeMonsterAction(action = {}) {
     status: normalizeStatusId(action.status),
     statusDuration: action.statusDuration || "",
     statusOnDamage: action.statusOnDamage === true || action.statusOnDamage === "true",
-    ranged: action.ranged === true || action.ranged === "true",
+    ranged: action.ranged === true || action.ranged === "true" || ["near", "far"].includes(range),
     ignoreArmor: action.ignoreArmor === true || action.ignoreArmor === "true"
   };
+}
+
+function buildMonsterActionSaveSummary(action = {}) {
+  const abilityLabel = getAbilityLabel(action.saveAbility);
+  if (!abilityLabel) return "";
+
+  return `
+    <p><strong>Save:</strong> Target rolls ${escapeHtml(abilityLabel)}${
+      action.saveTarget ? ` vs ${escapeHtml(action.saveTarget)}` : ""
+    }.</p>
+  `;
+}
+
+function buildMonsterActionSaveButton(action = {}, sourceName = "") {
+  const abilityLabel = getAbilityLabel(action.saveAbility);
+  if (!abilityLabel) return "";
+
+  return `
+    <button
+      class="ts-roll-monster-save"
+      data-save-ability="${normalizeAbilityKey(action.saveAbility)}"
+      data-save-target="${escapeHtml(action.saveTarget || "")}"
+      data-save-source="${escapeHtml(sourceName)}"
+    >
+      Roll ${escapeHtml(abilityLabel)} Save
+    </button>
+  `;
 }
 
 function buildMonsterActionStatusSummary(action = {}) {
@@ -4234,22 +4673,30 @@ async function editMonsterAction(actor, index = null) {
         <input name="roll" type="text" value="${escapeHtml(existing.roll)}" placeholder="Example: 10">
       </div>
       <div class="form-group">
+        <label>Range</label>
+        <select name="range">
+          ${buildRangeOptions(existing.range)}
+        </select>
+      </div>
+      <div class="form-group">
         <label>Damage</label>
         <input name="damage" type="text" value="${escapeHtml(existing.damage)}" placeholder="Example: 1d6">
       </div>
       <div class="form-group">
         <label>Damage Type</label>
         <select name="damageType">
-          <option value="non-magical" ${existingDamageType === "non-magical" ? "selected" : ""}>Non-magical</option>
-          <option value="fire" ${existingDamageType === "fire" ? "selected" : ""}>Fire</option>
-          <option value="ice" ${existingDamageType === "ice" ? "selected" : ""}>Ice</option>
-          <option value="wind" ${existingDamageType === "wind" ? "selected" : ""}>Wind</option>
-          <option value="earth" ${existingDamageType === "earth" ? "selected" : ""}>Earth</option>
-          <option value="thunder" ${existingDamageType === "thunder" ? "selected" : ""}>Thunder</option>
-          <option value="water" ${existingDamageType === "water" ? "selected" : ""}>Water</option>
-          <option value="light" ${existingDamageType === "light" ? "selected" : ""}>Light</option>
-          <option value="darkness" ${existingDamageType === "darkness" ? "selected" : ""}>Darkness</option>
+          ${buildDamageTypeOptions(existingDamageType)}
         </select>
+      </div>
+      <div class="form-group">
+        <label>Save Ability</label>
+        <select name="saveAbility">
+          ${buildAbilityOptions(existing.saveAbility)}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Save Target</label>
+        <input name="saveTarget" type="number" min="1" value="${escapeHtml(existing.saveTarget || "")}" placeholder="Blank uses target ability">
       </div>
       <div class="form-group">
         <label>Action Color</label>
@@ -4304,8 +4751,11 @@ async function editMonsterAction(actor, index = null) {
           const action = normalizeMonsterAction({
             name: form.name.value,
             roll: form.roll.value,
+            range: form.range.value,
             damage: form.damage.value,
             damageType: form.damageType.value,
+            saveAbility: form.saveAbility.value,
+            saveTarget: form.saveTarget.value,
             actionColor: form.actionColor.value,
             special: form.special.checked,
             staminaCost: form.staminaCost.value,
@@ -4334,8 +4784,11 @@ async function importMonsterActions(actor) {
   {
     "name": "Brawl",
     "roll": "8",
+    "range": "close",
     "damage": "1d6",
     "damageType": "non-magical",
+    "saveAbility": "",
+    "saveTarget": "",
     "actionColor": "normal",
     "special": false,
     "staminaCost": 0,
@@ -4386,6 +4839,23 @@ async function useMonsterAction(actor, action, { actionIndex = null, rotation = 
 
   action = normalizeMonsterAction(action);
 
+  const targetToken = getPrimaryTargetToken();
+  const requiredRange = normalizeRange(action.range);
+  const rangeLabel = getRangeLabel(requiredRange);
+  const rangeInfo = targetToken ? getRangeInfo(actor, targetToken) : null;
+
+  if (requiredRange === "self" && targetToken && targetToken.actor?.id !== actor.id) {
+    ui.notifications.warn(`${action.name} has Self range and can only target ${actor.name}.`);
+    return;
+  }
+
+  if (requiredRange && requiredRange !== "self" && targetToken && !isTargetWithinRange(requiredRange, rangeInfo)) {
+    ui.notifications.warn(
+      `${action.name} is ${rangeLabel} range, but target is ${rangeInfo.label}.`
+    );
+    return;
+  }
+
   const staminaCost = action.special ? Math.max(Number(action.staminaCost || 1), 1) : 0;
   const currentStamina = Number(actor.system.stamina?.value ?? 0);
 
@@ -4403,13 +4873,14 @@ async function useMonsterAction(actor, action, { actionIndex = null, rotation = 
   let damageTotal = null;
   let actionRoll = null;
   let damageRoll = null;
-  const targetToken = getPrimaryTargetToken();
   const damageType = getMonsterEffectiveDamageType(actor, action.damageType);
   const damageTypeLabel = getDamageTypeLabel(damageType);
   const damageBonus = getMonsterVariantDamageBonus(actor);
   const statusId = normalizeStatusId(action.status);
   const statusSource = `${actor.name}: ${action.name}`;
   const statusSummary = buildMonsterActionStatusSummary(action);
+  const saveSummary = buildMonsterActionSaveSummary(action);
+  const saveButton = buildMonsterActionSaveButton(action, statusSource);
   const statusButton = statusId && (!action.statusOnDamage || !action.damage)
     ? buildApplyStatusButton(action, statusSource)
     : "";
@@ -4443,17 +4914,20 @@ async function useMonsterAction(actor, action, { actionIndex = null, rotation = 
         ${rotation ? "<p><strong>Rotation:</strong> Used the next action in sequence.</p>" : ""}
         ${action.special ? `<p><strong>Special Action:</strong> Spent ${staminaCost} Stamina.</p>` : ""}
         ${action.actionColor !== "normal" ? `<p><strong>${getMonsterActionColorLabel(action.actionColor)} Action:</strong> ${reactionRules.text}</p>` : ""}
+        ${rangeLabel ? `<p><strong>Range:</strong> ${rangeLabel}</p>` : ""}
+        ${rangeInfo ? `<p><strong>Target Distance:</strong> ${rangeInfo.label}</p>` : ""}
         ${rollText}
         ${damageTotal !== null ? `<p><strong>Damage:</strong> ${damageRoll.total}${damageBonus ? ` + ${damageBonus} Variant = ${damageTotal}` : ""}</p>` : ""}
         ${damageTotal !== null && damageTypeLabel ? `<p><strong>Damage Type:</strong> ${damageTypeLabel}</p>` : ""}
         <p>${escapeHtml(action.effect || "")}</p>
+        ${saveSummary}
         ${statusSummary}
         ${
           damageTotal !== null
             ? `${buildReactionButtons({
                 attacker: actor,
                 defender: targetToken?.actor,
-                rangedAttack: action.ranged === true || action.ranged === "true",
+                rangedAttack: action.ranged === true || action.ranged === "true" || ["near", "far"].includes(requiredRange),
                 allowDodge: reactionRules.allowDodge,
                 allowParry: reactionRules.allowParry,
                 restrictionText: reactionRules.text
@@ -4464,6 +4938,7 @@ async function useMonsterAction(actor, action, { actionIndex = null, rotation = 
               </button>`
             : ""
         }
+        ${saveButton}
         ${statusButton}
       </div>
     `
@@ -4934,6 +5409,7 @@ class TwilightSwordMonsterSheet extends ActorSheet {
 
     context.system = system;
     context.items = this.actor.items;
+    context.feats = this.actor.items.filter(i => i.type === "feat");
     context.monsterVariant = monsterVariant;
     context.hearts = buildPips(system.hearts?.value, monsterVariant.effectiveHeartsMax, "heart");
     context.stamina = buildPips(system.stamina?.value, system.stamina?.max, "stamina");
@@ -4976,6 +5452,55 @@ class TwilightSwordMonsterSheet extends ActorSheet {
 
     html.find(".status-toggle").click(async event => {
       await toggleActorStatus(this.actor, event.currentTarget.dataset.statusId);
+    });
+
+    html.find(".create-monster-feat").click(async event => {
+      event.preventDefault();
+      await createOwnedFeat(this.actor);
+    });
+
+    html.find(".feat-chat").click(async event => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const itemId =
+        event.currentTarget.dataset.itemId ||
+        event.currentTarget.closest(".item")?.dataset.itemId;
+      const feat = this.actor.items.get(itemId);
+
+      if (!feat) {
+        ui.notifications.warn("Could not find feat.");
+        return;
+      }
+
+      await useFeat(this.actor, feat);
+    });
+
+    html.find(".item-edit").click(async event => {
+      event.preventDefault();
+      await openItemRowSheet(this.actor, event.currentTarget.closest(".zelda-item"));
+    });
+
+    html.find(".item-delete").click(async event => {
+      event.preventDefault();
+
+      const itemId = event.currentTarget.dataset.itemId;
+      const item = this.actor.items.get(itemId);
+
+      await deleteOwnedItemFromSheet(this.actor, item);
+    });
+
+    html.find(".zelda-item").dblclick(async event => {
+      event.preventDefault();
+
+      if (shouldIgnoreItemRowOpen(event)) return;
+
+      await openItemRowSheet(this.actor, event.currentTarget);
+    });
+
+    html.find(".zelda-item").contextmenu(async event => {
+      event.preventDefault();
+      await showItemRowContextMenu(this.actor, event.currentTarget);
     });
 
     html.find(".monster-action-menu").click(event => {
@@ -5095,6 +5620,22 @@ class TwilightSwordMonsterSheet extends ActorSheet {
       await rollMonsterDamage(this.actor);
     });
   }
+
+  async _onDrop(event) {
+    event.preventDefault();
+
+    const data = TextEditor.getDragEventData(event);
+    const item = await Item.implementation.fromDropData(data);
+
+    if (!item) return super._onDrop(event);
+
+    if (item.type === "feat") {
+      await addFeatToActor(this.actor, item);
+      return false;
+    }
+
+    return super._onDrop(event);
+  }
 }
 
 class TwilightSwordNPCSheet extends TwilightSwordChampionSheet {
@@ -5130,6 +5671,7 @@ class TwilightSwordItemSheet extends ItemSheet {
     context.isArmor = this.item.type === "armor";
     context.isSpell = this.item.type === "spell";
     context.isFeat = this.item.type === "feat";
+    context.isMonsterFeat = this.item.type === "feat" && this.item.parent?.type === "monster";
     context.isKin = this.item.type === "kin";
     context.isWay = this.item.type === "way";
     context.isGear = ["gear", "consumable"].includes(this.item.type);
@@ -5203,6 +5745,14 @@ Hooks.once("init", function () {
   );
   Handlebars.registerHelper("tsElementalAffinityLabel", affinity => getElementalAffinityLabel(affinity));
   Handlebars.registerHelper("tsDamageTypeLabel", damageType => getDamageTypeLabel(damageType));
+  Handlebars.registerHelper("tsAbilityLabel", abilityKey => getAbilityLabel(abilityKey));
+  Handlebars.registerHelper("tsDamageTypeOptions", damageType =>
+    new Handlebars.SafeString(buildDamageTypeOptions(damageType))
+  );
+  Handlebars.registerHelper("tsElementalAffinityOptions", affinity =>
+    new Handlebars.SafeString(buildElementalAffinityOptions(affinity))
+  );
+  Handlebars.registerHelper("tsRangeLabel", range => getRangeLabel(range));
   Handlebars.registerHelper("tsStatusLabel", statusId => getStatusLabel(statusId));
   Handlebars.registerHelper("tsSpellTypeLabel", spellType => getSpellTypeLabel(spellType));
   Handlebars.registerHelper("tsItemTooltip", item => getItemTooltip(item));
@@ -5303,7 +5853,8 @@ Hooks.on("renderCombatTracker", (app, html) => {
     { id: "fear", name: "Fear", icon: "icons/svg/terror.svg" },
     { id: "freeze", name: "Freeze", icon: "icons/magic/water/snowflake-ice-blue.webp" },
     { id: "blind", name: "Blind", icon: "icons/svg/blind.svg" },
-    { id: "silence", name: "Silence", icon: "icons/svg/silenced.svg" }
+    { id: "silence", name: "Silence", icon: "icons/svg/silenced.svg" },
+    { id: "prone", name: "Prone", icon: "icons/svg/falling.svg" }
   ];
 
   Actors.unregisterSheet("core", ActorSheet);
@@ -5336,11 +5887,92 @@ Hooks.on("renderCombatTracker", (app, html) => {
   console.log("Twilight Sword | Sheets registered");
 });
 
+function getUpdateChange(changes, path) {
+  if (Object.prototype.hasOwnProperty.call(changes, path)) return changes[path];
+
+  return foundry.utils.getProperty(changes, path);
+}
+
+function setUpdateChange(changes, path, value) {
+  if (Object.prototype.hasOwnProperty.call(changes, path)) {
+    changes[path] = value;
+    return;
+  }
+
+  foundry.utils.setProperty(changes, path, value);
+}
+
+function clampActorResourceUpdate(actor, changes, resource, maxValue = null) {
+  const maxPath = `system.${resource}.max`;
+  const valuePath = `system.${resource}.value`;
+  const maxChanged = getUpdateChange(changes, maxPath);
+  const valueChanged = getUpdateChange(changes, valuePath);
+
+  if (maxValue === null && maxChanged === undefined && valueChanged === undefined) return;
+
+  const nextMax = Math.max(Math.floor(Number(
+    maxValue !== null
+      ? maxValue
+      : maxChanged !== undefined
+        ? maxChanged
+        : actor.system?.[resource]?.max
+  ) || 0), 0);
+  const nextValue = valueChanged !== undefined
+    ? Math.max(Math.floor(Number(valueChanged) || 0), 0)
+    : Math.max(Math.floor(Number(actor.system?.[resource]?.value ?? 0) || 0), 0);
+  const clampedValue = Math.min(nextValue, nextMax);
+
+  if (maxValue !== null && maxChanged === undefined) {
+    setUpdateChange(changes, maxPath, nextMax);
+  }
+
+  if (clampedValue !== nextValue) {
+    setUpdateChange(changes, valuePath, clampedValue);
+  }
+}
+
 Hooks.on("preUpdateActor", async (actor, changes) => {
+  clampActorResourceUpdate(actor, changes, "stamina");
+
+  if (actor.type === "monster") {
+    const maxChanged = getUpdateChange(changes, "system.hearts.max");
+    const valueChanged = getUpdateChange(changes, "system.hearts.value");
+    const threatChanged = getUpdateChange(changes, "system.level");
+    const variantRankChanged = getUpdateChange(changes, "system.variant.rank");
+
+    if (
+      maxChanged !== undefined ||
+      valueChanged !== undefined ||
+      threatChanged !== undefined ||
+      variantRankChanged !== undefined
+    ) {
+      const baseMax = maxChanged !== undefined
+        ? Math.max(Math.floor(Number(maxChanged) || 0), 0)
+        : getMonsterBaseMaxHearts(actor);
+      const baseThreat = threatChanged !== undefined
+        ? Math.max(Math.floor(Number(threatChanged) || 1), 1)
+        : getMonsterBaseThreat(actor);
+      const rank = variantRankChanged !== undefined
+        ? variantRankChanged
+        : getMonsterVariantData(actor).rank;
+      const effectiveMax = getMonsterEffectiveMaxHeartsFromValues(baseMax, baseThreat, rank);
+      const currentValue = valueChanged !== undefined
+        ? Math.max(Math.floor(Number(valueChanged) || 0), 0)
+        : Number(actor.system.hearts?.value ?? 0);
+      const clampedValue = Math.min(Math.max(currentValue, 0), effectiveMax);
+
+      if (clampedValue !== currentValue) {
+        setUpdateChange(changes, "system.hearts.value", clampedValue);
+      }
+    }
+
+    return;
+  }
+
   if (!["champion", "npc"].includes(actor.type)) return;
 
-  const vit = foundry.utils.getProperty(changes, "system.abilities.vit.value");
-  const heartsBonus = foundry.utils.getProperty(changes, "system.hearts.bonus");
+  const vit = getUpdateChange(changes, "system.abilities.vit.value");
+  const heartsBonus = getUpdateChange(changes, "system.hearts.bonus");
 
   if (vit !== undefined || heartsBonus !== undefined) {
     const nextVit = vit !== undefined
@@ -5351,11 +5983,7 @@ Hooks.on("preUpdateActor", async (actor, changes) => {
       : Number(actor.system.hearts?.bonus ?? 0);
     const newMax = 10 + nextVit + nextBonus;
 
-    foundry.utils.setProperty(changes, "system.hearts.max", newMax);
-
-    if (Number(actor.system.hearts?.value ?? 0) > newMax) {
-      foundry.utils.setProperty(changes, "system.hearts.value", newMax);
-    }
+    clampActorResourceUpdate(actor, changes, "hearts", newMax);
   }
 });
 
@@ -5436,6 +6064,7 @@ Hooks.on("updateCombat", async (combat, changed) => {
 
   if (!actor) return;
 
+  await processMonsterStartOfTurnAbilities(actor, combat, combatant);
   await processStartOfTurnStatuses(actor);
 });
 
@@ -5444,6 +6073,34 @@ Hooks.on("renderCompendium", (app, html) => {
 });
 
 Hooks.on("renderChatMessage", (message, html) => {
+  html.find(".ts-roll-monster-save").click(async event => {
+    event.preventDefault();
+
+    const abilityKey = normalizeAbilityKey(event.currentTarget.dataset.saveAbility);
+    const abilityLabel = getAbilityLabel(abilityKey);
+    const saveTarget = event.currentTarget.dataset.saveTarget || "";
+    const sourceName = event.currentTarget.dataset.saveSource || "Monster Action";
+    const targets = Array.from(game.user.targets);
+    const token = targets[0] || canvas.tokens.controlled[0];
+
+    if (!abilityLabel) {
+      ui.notifications.warn("This save does not have a valid ability.");
+      return;
+    }
+
+    if (!token?.actor) {
+      ui.notifications.warn("Target a token first, or select the actor making the save.");
+      return;
+    }
+
+    await rollAbility(token.actor, abilityKey, {
+      askStamina: token.actor.type !== "monster",
+      target: saveTarget,
+      title: `${abilityLabel} Save`,
+      sourceName
+    });
+  });
+
   html.find(".ts-reaction-dodge").click(async event => {
     event.preventDefault();
 
@@ -5456,12 +6113,12 @@ Hooks.on("renderChatMessage", (message, html) => {
       return;
     }
 
-    if (attacker?.type !== "monster" && !canMonsterUseVariantReaction(token.actor)) {
-      ui.notifications.warn("Only Champions and Black variant Monsters can dodge attacks.");
+    if (attacker?.type !== "monster" && !canMonsterUseReactionType(token.actor, "dodge")) {
+      ui.notifications.warn("Only Champions and Monsters with Dodge [X] can dodge attacks.");
       return;
     }
 
-    await rollReaction(token.actor, "dodge");
+    await rollReaction(token.actor, "dodge", { attacker });
   });
 
   html.find(".ts-reaction-parry").click(async event => {
@@ -5476,13 +6133,13 @@ Hooks.on("renderChatMessage", (message, html) => {
       return;
     }
 
-    if (attacker?.type !== "monster" && !canMonsterUseVariantReaction(token.actor)) {
-      ui.notifications.warn("Only Champions and Black variant Monsters can parry attacks.");
+    if (attacker?.type !== "monster" && !canMonsterUseReactionType(token.actor, "parry")) {
+      ui.notifications.warn("Only Champions and Monsters with Parry [X] can parry attacks.");
       return;
     }
 
     const rangedAttack = event.currentTarget.dataset.rangedAttack === "true";
-    await rollReaction(token.actor, "parry", { rangedAttack });
+    await rollReaction(token.actor, "parry", { attacker, rangedAttack });
   });
 
   html.find(".ts-lockpick-break-check").click(async event => {

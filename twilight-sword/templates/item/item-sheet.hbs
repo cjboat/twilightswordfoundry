@@ -69,17 +69,7 @@
         <label>
           Type
           <select name="system.damageType">
-            {{#select damageType}}
-              <option value="non-magical">Non-magical</option>
-              <option value="fire">Fire</option>
-              <option value="ice">Ice</option>
-              <option value="wind">Wind</option>
-              <option value="earth">Earth</option>
-              <option value="thunder">Thunder</option>
-              <option value="water">Water</option>
-              <option value="light">Light</option>
-              <option value="darkness">Darkness</option>
-            {{/select}}
+            {{{tsDamageTypeOptions damageType}}}
           </select>
         </label>
       </div>
@@ -187,11 +177,12 @@
           <option value="confusion">Confusion</option>
           <option value="wound">Wound</option>
           <option value="fear">Fear</option>
-          <option value="freeze">Freeze</option>
-          <option value="blind">Blind</option>
-          <option value="silence">Silence</option>
-        {{/select}}
-      </select>
+              <option value="freeze">Freeze</option>
+              <option value="blind">Blind</option>
+              <option value="silence">Silence</option>
+              <option value="prone">Prone</option>
+            {{/select}}
+          </select>
 
       <label>Status Duration</label>
       <input name="system.statusDuration" type="text" value="{{system.statusDuration}}" placeholder="Blank, 1, or 1d6 rounds" />
@@ -210,17 +201,7 @@
         <label>
           Type
           <select name="system.damageType">
-            {{#select damageType}}
-              <option value="non-magical">Non-magical</option>
-              <option value="fire">Fire</option>
-              <option value="ice">Ice</option>
-              <option value="wind">Wind</option>
-              <option value="earth">Earth</option>
-              <option value="thunder">Thunder</option>
-              <option value="water">Water</option>
-              <option value="light">Light</option>
-              <option value="darkness">Darkness</option>
-            {{/select}}
+            {{{tsDamageTypeOptions damageType}}}
           </select>
         </label>
       </div>
@@ -232,10 +213,12 @@
     {{/if}}
 
     {{#if isFeat}}
-      <h2>Feat</h2>
+      {{#unless isMonsterFeat}}
+        <h2>Feat</h2>
 
-      <label>Way</label>
-      <input name="system.way" type="text" value="{{system.way}}" />
+        <label>Way</label>
+        <input name="system.way" type="text" value="{{system.way}}" />
+      {{/unless}}
     {{/if}}
 
     {{#if isKin}}

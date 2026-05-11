@@ -26,4 +26,19 @@ A Foundry v13 system for Twilight Sword by Two Little Mice
 ## v 0.1.3
 - Bug fixes.  
 - Implemented heart / stamina stone usage. Using these will increase your hearts / stamina by 1 permanently, then be consumed.   
-- 
+- Updated NPC sheets to be more like Champion sheets, but more streamlined and lightweight.  
+- Added the ability to click on Hearts and Stamina points to add / subtract.  
+- Added the ability to tab through the stats on Champion, Monster, and NPC sheets.  
+
+# 2026-05-10
+## v 0.1.4
+- Bug fixes.
+- Cleaned up monster cards.
+- Added "prone" status effect.
+- Added monster effects. Example is "Sneaky" for Bogoblins. Some of these are automated in the system.
+	- Parry [x] and Dodge [x] will allow the monsters to dodge and parry when rolling under the number.
+	- Regeneration will regenerate 1 heart at the start of the turn.
+	- Plant makes a monster resistant to Light, and weak to Fire
+	- Certain abilities like "Savage" lower the chance of being hit.
+	- Others will be added over time.
+- Added "Twlight" elemental type - it is Strong to every other element, and every other element is weak to it.
