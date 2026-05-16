@@ -1,6 +1,6 @@
 # Twilight Sword
 A Foundry v13 system for Twilight Sword by Two Little Mice
-- Module by: CJ Boat
+- Module by: IO Dev Team
 
 # 2026-05-08
 ## v 0.1.0
